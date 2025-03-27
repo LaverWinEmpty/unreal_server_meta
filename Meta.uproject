@@ -1,0 +1,29 @@
+{
+	"FileVersion": 3,
+	"EngineAssociation": "{AD8D86DA-4720-8A81-D0FE-08A81542EF36}",
+	"Category": "",
+	"Description": "",
+	"Modules": [
+		{
+			"Name": "Meta",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"Engine",
+				"OnlineSubsystemUtils",
+				"CoreUObject",
+				"UMG"
+			]
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "ModelingToolsEditorMode",
+			"Enabled": true,
+			"TargetAllowList": [
+				"Editor",
+				"Server"
+			]
+		}
+	]
+}
