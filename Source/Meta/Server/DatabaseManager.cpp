@@ -8,60 +8,60 @@ void UDatabaseManager::Initialize(FSubsystemCollectionBase& Collection) {
 
 }
 
-void UDatabaseManager::AddAccount(const FString& ID, FString& PW) {
+void UDatabaseManager::AddAccount(const FString& UserID, FString& UserPW) {
 
 }
 
-bool UDatabaseManager::Query(
+void UDatabaseManager::Query(
     const FString&                           Query,
     TFunction<void(sql::PreparedStatement*)> Prepare,
     TFunction<void(sql::ResultSet*)>         Process) {
     // TODO: thread-pool 넣고 처리
 
-    TFuture<FConnection> Future = GetConnection();
-    Future.Next(
-        // copy: async
-        [this, Query, Prepare, Process](FConnection Connection) {
-            if (Connection) {
-                UE_LOG(LogTemp, Log, TEXT("Acquired a MySQL connection!")); // logging
+    //TFuture<FConnection> Future = GetConnection();
+    //Future.Next(
+    //    // copy: async
+    //    [this, Query, Prepare, Process](FConnection Connection) {
+    //        if (Connection) {
+    //            UE_LOG(LogTemp, Log, TEXT("Acquired a MySQL connection!")); // logging
 
-                // set query parameter
-                sql::PreparedStatement* PreparedStatement = Connection->prepareStatement(TCHAR_TO_UTF8(*Query));
-                if (!PreparedStatement) {
-                    UE_LOG(LogTemp, Error, TEXT("Query PreparedStatement Create Failed"));
-                    check(false);
-                    return;
-                }
-                Prepare(PreparedStatement);
+    //            // set query parameter
+    //            sql::PreparedStatement* PreparedStatement = Connection->prepareStatement(TCHAR_TO_UTF8(*Query));
+    //            if (!PreparedStatement) {
+    //                UE_LOG(LogTemp, Error, TEXT("Query PreparedStatement Create Failed"));
+    //                check(false);
+    //                return;
+    //            }
+    //            Prepare(PreparedStatement);
 
-                // get result and process
-                sql::ResultSet* ResultSet = PreparedStatement->executeQuery();
-                if (!ResultSet) {
-                    UE_LOG(LogTemp, Error, TEXT("Query ResultSet Create Failed"));
-                    check(false);
-                    return;
-                }
-                Process(ResultSet);
+    //            // get result and process
+    //            sql::ResultSet* ResultSet = PreparedStatement->executeQuery();
+    //            if (!ResultSet) {
+    //                UE_LOG(LogTemp, Error, TEXT("Query ResultSet Create Failed"));
+    //                check(false);
+    //                return;
+    //            }
+    //            Process(ResultSet);
 
-                // terminate
-                UE_LOG(LogTemp, Log, TEXT("Query executed successfully."));
+    //            // terminate
+    //            UE_LOG(LogTemp, Log, TEXT("Query executed successfully."));
 
-                // release
-                delete ResultSet;
-                delete PreparedStatement;
-                ReleaseConnection(
-                    Connection).Next([]() {
-                        UE_LOG(LogTemp, Log, TEXT("Released the MySQL connection!"));
-                    }
-                );
-            }
+    //            // release
+    //            delete ResultSet;
+    //            delete PreparedStatement;
+    //            ReleaseConnection(
+    //                Connection).Next([]() {
+    //                    UE_LOG(LogTemp, Log, TEXT("Released the MySQL connection!"));
+    //                }
+    //            );
+    //        }
 
-            // failed
-            else {
-                UE_LOG(LogTemp, Error, TEXT("Failed to acquire a MySQL connection"));
-            }
-        }
-    );
+    //        // failed
+    //        else {
+    //            UE_LOG(LogTemp, Error, TEXT("Failed to acquire a MySQL connection"));
+    //        }
+    //    }
+    //);
 }
 
 void UDatabaseManager::Setup(const FString& DBUser, const FString& DBPassword, const FString& DBName, const FString& DBAddress) {
