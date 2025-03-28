@@ -1,37 +1,37 @@
 #include "AccountManager.h"
+#include "Server/DatabaseManager.h"
 #include "Actor/GenericGame.h"
 #include "Actor/GenericCharacter.h"
 #include "Actor/GenericController.h"
+#include "Misc/SecureHash.h"
 
 // TODO: 유틸로 만들기
 // TMap<FString, FStringFormatArg> Args;
 // Args.Emplace(TEXT("0"), Code);
 // return FString::Format(TEXT("Error {0}"), Args);
 
-void UAccountManager::Authenticate(EAuth Type, const FString& ID, const FString& PW) {
+void UAccountManager::Authenticate(EAuthReq Type, const FString& ID, const FString& PW) {
     UE_LOG(LogTemp, Log, TEXT("서버에 계정관리 요청을 보냅니다"));
 
     // server to client
     if (IsUser()) {
         UE_LOG(LogTemp, Log, TEXT("call UAccountManager::Authenticate() by Client"));
         AuthenticateRequest(static_cast<uint8>(Type), ID, PW); // client to server
+        return;
     }
 
-    if (IsHost()) {
-        if (IsListen()) {
-            UE_LOG(LogTemp, Log, TEXT("call UAccountManager::Authenticate() by Listen"));
-        }
-        else if (IsStandalone()) {
-            UE_LOG(LogTemp, Log, TEXT("call UAccountManager::Authenticate() by Standalone"));
-        }
-        else checkNoEntry();
-        AuthenticateRequest_Implementation(Type, ID, PW); // dierct call
+    // else is server
+    if (IsListen()) {
+        UE_LOG(LogTemp, Log, TEXT("call UAccountManager::Authenticate() by Listen"));
     }
-
-    else {
-        UE_LOG(LogTemp, Error, TEXT("Request call by Dedicated Server."));
-        check(false);
+    else if (IsStandalone()) {
+        UE_LOG(LogTemp, Log, TEXT("call UAccountManager::Authenticate() by Standalone"));
     }
+    else if (IsDedicated()) {
+        UE_LOG(LogTemp, Log, TEXT("call UAccountManager::Authenticate() by Dedicate Server"));
+    }
+    else checkNoEntry();
+    AuthenticateRequest_Implementation(static_cast<uint8>(Type), ID, PW); // dierct call
 }
 
 void UAccountManager::AuthenticateRequest_Implementation(uint8 Type, const FString& ID, const FString& PW) {
@@ -40,8 +40,8 @@ void UAccountManager::AuthenticateRequest_Implementation(uint8 Type, const FStri
     int32   Code;    // result code
     FString Message; // result message
 
-    switch(static_cast<EAuth>(Type)) {
-    case EAuth::A_LogIn:
+    switch(static_cast<EAuthReq>(Type)) {
+    case EAuthReq::EAR_LogIn:
         /* wrap */ {
             FString UserName = LogIn(ID, PW);
             Message          = GetResultMessage(0); // 임시 값
@@ -51,18 +51,18 @@ void UAccountManager::AuthenticateRequest_Implementation(uint8 Type, const FStri
         }
         break;
 
-    case EAuth::A_LogOut:
+    case EAuthReq::EAR_LogOut:
         Code = LogOut(ID, PW);
         break;
-    case EAuth::A_SignOut:
+    case EAuthReq::EAR_SignOut:
         Code = SignOut(ID, PW);
         break;
-    case EAuth::A_SignIn:
+    case EAuthReq::EAR_SignUp:
         Code = SignOut(ID, PW);
         break;
     }
 
-    if (static_cast<EAuth>(Type) != EAuth::A_LogIn) {
+    if (static_cast<EAuthReq>(Type) != EAuthReq::EAR_LogIn) {
         Message = GetResultMessage(0); // 임시 값
         UE_LOG(LogTemp, Log, TEXT("Server: %s"), *Message);
     }
@@ -94,13 +94,13 @@ void UAccountManager::AuthenticateResponse_Implementation(uint8 Type, const FStr
     // TODO: 컨트롤러 생성 후 캐릭터 만들어서 할당
     // GetWorldSafe(this)->SpawnActor<AGenericController>(AGenericController::StaticClass());
 
-    // TODO: 임시 로직입니다. 추후 Client Session 등으로 빼야 합니다.
-    FActorSpawnParameters SpawnParams{};
-    AActor* Player = GetWorld()->SpawnActor<AGenericCharacter>(FVector{ 100, 100, 100 }, FRotator{ 0, 0, 0 }, SpawnParams);
-    if (!Player) {
-        UE_LOG(LogTemp, Error, TEXT("캐릭터 스폰 실패"));
-    }
-    else UE_LOG(LogTemp, Log, TEXT("캐릭터 스폰"));
+    //// TODO: 임시 로직입니다. 추후 Client Session 등으로 빼야 합니다.
+    //FActorSpawnParameters SpawnParams{};
+    //AActor* Player = GetWorld()->SpawnActor<AGenericCharacter>(FVector{ 100, 100, 100 }, FRotator{ 0, 0, 0 }, SpawnParams);
+    //if (!Player) {
+    //    UE_LOG(LogTemp, Error, TEXT("캐릭터 스폰 실패"));
+    //}
+    //else UE_LOG(LogTemp, Log, TEXT("캐릭터 스폰"));
 
 }
 
@@ -110,12 +110,19 @@ FString UAccountManager::LogIn(const FString& ID, const FString& PW) {
 }
 
 int32 UAccountManager::LogOut(const FString& ID, const FString& PW) {
-    // TODO: Client Session 검색
     return 0;
 }
 
 int32 UAccountManager::SignUp(const FString& ID, const FString& PW) {
-    // TODO: DB INSERT -
+    FString HashedPW = HashSha256(PW);
+    // INSERT
+    UManager::Instance<UDatabaseManager>(this)->Query(
+        "INSERT INTO user_tbl VALUES (?, ?)",
+        [ID, PW](sql::PreparedStatement* In) {
+            In->setString(0, TCHAR_TO_UTF8(*ID));
+            In->setString(1, TCHAR_TO_UTF8(*PW));
+        }
+    );
     return 0;
 }
 
@@ -130,4 +137,17 @@ FString UAccountManager::GetResultMessage(int Code) {
         return TEXT("Succeeded");
     }
     return TEXT("Failed");
+}
+
+FString UAccountManager::HashSha256(const FString& PW)
+{
+    FSHAHash Hasher;
+    FString Salted = GetSalted(PW);
+    Hasher.AppendString(Salted);
+    return Hasher.ToString();
+}
+
+FString UAccountManager::GetSalted(const FString& In) {
+    // 시늉만
+    return In + _T("_Unreal_Meta_Project_Account_Manager_Salt");
 }

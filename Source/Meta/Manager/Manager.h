@@ -15,7 +15,7 @@ class META_API UManager : public UGameInstanceSubsystem
 	GENERATED_BODY()
 
 public:
-	template<typename T> static T* Instance(AActor* In); //!< get subsystem
+	template<typename T> static T* Instance(const UObject* In); //!< get subsystem
 
 public:
 	//!@ brief safe get world
@@ -33,7 +33,7 @@ public:
 public:
 	bool IsUser()   const; //!< check not dedicated
 	bool IsServer() const; //!< check not client
-	bool IsHost()  const;  //!< check listen and standalone
+	bool IsHost()   const; //!< check listen and standalone
 
 public:
 	bool IsClient()     const; //!< check client
@@ -53,6 +53,6 @@ public:
 	static bool IsDedicated(const UObject*);  //!< check dedicated
 };
 
-template<typename T> inline T* UManager::Instance(AActor* WorldContext) {
+template<typename T> inline T* UManager::Instance(const UObject* WorldContext) {
 	return WorldContext->GetWorld()->GetGameInstance()->GetSubsystem<T>();
 }

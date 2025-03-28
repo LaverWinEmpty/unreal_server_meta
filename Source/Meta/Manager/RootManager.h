@@ -3,20 +3,16 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/GameMode.h"
-#include "GenericGame.generated.h"
+#include "Manager/Manager.h"
+#include "RootManager.generated.h"
 
 /*********************************************************************************************************************
- * @brief 서버 기본 게임 모드입니다.
+ * All Managers Management Class
  *********************************************************************************************************************/
 UCLASS()
-class META_API AGenericGame: public AGameMode
-{
-	GENERATED_BODY()
+class META_API URootManager: public UManager {
+    GENERATED_BODY()
 
 public:
-	AGenericGame();
-
-public:
-	void BeginPlay() override;
+    virtual void Initialize(FSubsystemCollectionBase& Collection);
 };

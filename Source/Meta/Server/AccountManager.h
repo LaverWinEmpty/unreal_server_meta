@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UObject/NoExportTypes.h"
 #include "Manager/Manager.h"
 #include "AccountManager.generated.h"
 
@@ -15,17 +14,17 @@ class META_API UAccountManager : public UManager {
     GENERATED_BODY()
 
 public:
-    enum EAuth : uint8 {
-        A_LogIn,   // 접속
-        A_SignIn,  // 가입
-        A_LogOut,  // 종료
-        A_SignOut, // 탈퇴
+    enum class EAuthReq : uint8 {
+        EAR_LogIn,   // 접속
+        EAR_SignUp,  // 가입
+        EAR_LogOut,  // 종료
+        EAR_SignOut, // 탈퇴
 
         // 에러코드
     };
 
 public:
-    void Authenticate(EAuth In, const FString& ID, const FString& PW); // call by client -> process by server
+    void Authenticate(EAuthReq In, const FString& ID, const FString& PW); // call by client -> process by server
 protected:
     UFUNCTION(Server, Reliable)
     void AuthenticateRequest(uint8 In, const FString& ID, const FString& PW); // client request
@@ -45,4 +44,13 @@ protected:
 
 public:
     static FString GetResultMessage(int Code); //!< 임시 함수입니다
+
+public:
+    // FSHA256Hasher SHA256;
+
+private:
+    FString HashSha256(const FString&);
+    static FString GetSalted(const FString&);
 };
+
+using enum UAccountManager::EAuthReq;
