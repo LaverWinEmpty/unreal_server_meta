@@ -19,7 +19,8 @@ public class Meta : ModuleRules
 			"Engine",
 			"InputCore",
 			"EnhancedInput",
-            "PlatformCryptoOpenSSL"
+            "PlatformCryptoOpenSSL",
+            "OpenSSL",
         };
 		string[] Sources = new string[] {
 			//

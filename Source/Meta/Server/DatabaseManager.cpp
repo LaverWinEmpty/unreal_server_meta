@@ -40,7 +40,7 @@ void UDatabaseManager::Setup(
     // 쿼리
     Query("CREATE DATABASE IF NOT EXISTS DB;");
     Query("USE DB;");
-    Query("CREATE TABLE IF NOT EXISTS USER_TBL(USER_ID VARCHAR(32) PRIMARY KEY, USER_PW VARCHAR(32));");
+    Query("CREATE TABLE IF NOT EXISTS USER_TBL(USER_ID VARCHAR(32) PRIMARY KEY, USER_PW VARCHAR(64));");
 }
 
 void UDatabaseManager::Query(
@@ -109,27 +109,39 @@ void UDatabaseManager::OnQuery(
         delete Statement;
     }
 
-    // set query parameter
     else {
-        sql::PreparedStatement* Statement = Connection.prepareStatement(Query);
-        if (!Statement) {
-            UE_LOG(LogTemp, Error, TEXT("Query PreparedStatement Create Failed"));
-            check(false);
-            return;
+        sql::PreparedStatement* Statement = nullptr;
+        sql::ResultSet*         ResultSet = nullptr;
+        // set query parameter
+        try {
+            Statement = Connection.prepareStatement(Query);
+            if (!Statement) {
+                UE_LOG(LogTemp, Error, TEXT("Query PreparedStatement Create Failed"));
+                check(false);
+                return;
+            }
+            Prepare(Statement);
         }
-        Prepare(Statement);
+        catch (const sql::SQLException& e) {
+            UE_LOG(LogTemp, Error, TEXT("Query Post-Prepare Failed: %s"), *FString(e.what()));
+        }
 
         // get result and process
-        sql::ResultSet* ResultSet = Statement->executeQuery();
-        if (!ResultSet) {
-            UE_LOG(LogTemp, Error, TEXT("Query ResultSet Create Failed"));
-            check(false);
-            return;
-        }
+        try {
+            ResultSet = Statement->executeQuery();
+            if (!ResultSet) {
+                UE_LOG(LogTemp, Error, TEXT("Query ResultSet Create Failed"));
+                check(false);
+                return;
+            }
 
-        // else ignore
-        if (Process) {
-            Process(ResultSet);
+            // else ignore
+            if (Process) {
+                Process(ResultSet);
+            }
+        }
+        catch (const sql::SQLException& e) {
+            UE_LOG(LogTemp, Error, TEXT("Query Post-Process Failed: %s"), *FString(e.what()));
         }
 
         // release

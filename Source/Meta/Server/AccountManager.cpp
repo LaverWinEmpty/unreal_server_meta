@@ -4,6 +4,14 @@
 #include "Actor/GenericCharacter.h"
 #include "Actor/GenericController.h"
 #include "Misc/SecureHash.h"
+#include "EncryptionContextOpenSSL.h"
+
+#define UI UI_ST
+THIRD_PARTY_INCLUDES_START
+#include "openssl/evp.h"
+THIRD_PARTY_INCLUDES_END
+#undef UI
+#include "openssl/sha.h"
 
 // TODO: 유틸로 만들기
 // TMap<FString, FStringFormatArg> Args;
@@ -14,7 +22,7 @@ void UAccountManager::Authenticate(EAuthReq Type, const FString& ID, const FStri
     UE_LOG(LogTemp, Log, TEXT("서버에 계정관리 요청을 보냅니다"));
 
     // server to client
-    if (IsUser()) {
+    if (IsClient()) {
         UE_LOG(LogTemp, Log, TEXT("call UAccountManager::Authenticate() by Client"));
         AuthenticateRequest(static_cast<uint8>(Type), ID, PW); // client to server
         return;
@@ -58,7 +66,7 @@ void UAccountManager::AuthenticateRequest_Implementation(uint8 Type, const FStri
         Code = SignOut(ID, PW);
         break;
     case EAuthReq::EAR_SignUp:
-        Code = SignOut(ID, PW);
+        Code = SignUp(ID, PW);
         break;
     }
 
@@ -118,9 +126,9 @@ int32 UAccountManager::SignUp(const FString& ID, const FString& PW) {
     // INSERT
     UManager::Instance<UDatabaseManager>(this)->Query(
         "INSERT INTO user_tbl VALUES (?, ?)",
-        [ID, PW](sql::PreparedStatement* In) {
-            In->setString(0, TCHAR_TO_UTF8(*ID));
-            In->setString(1, TCHAR_TO_UTF8(*PW));
+        [ID, HashedPW](sql::PreparedStatement* In) {
+            In->setString(1, TCHAR_TO_UTF8(*ID));
+            In->setString(2, TCHAR_TO_UTF8(*HashedPW));
         }
     );
     return 0;
@@ -139,12 +147,28 @@ FString UAccountManager::GetResultMessage(int Code) {
     return TEXT("Failed");
 }
 
-FString UAccountManager::HashSha256(const FString& PW)
-{
-    FSHAHash Hasher;
-    FString Salted = GetSalted(PW);
-    Hasher.AppendString(Salted);
-    return Hasher.ToString();
+FString UAccountManager::HashSha256(const FString& In) {
+    // salting and convert
+    FString PW = GetSalted(In);
+    std::string UTF8String = TCHAR_TO_UTF8(*PW);
+    const char* InputData = UTF8String.c_str();
+    size_t InputLength = UTF8String.length();
+
+    // buffer
+    unsigned char Buffer[SHA256_DIGEST_LENGTH];
+
+    // hasing
+    SHA256_CTX Sha256Context;
+    SHA256_Init(&Sha256Context);
+    SHA256_Update(&Sha256Context, InputData, InputLength);
+    SHA256_Final(Buffer, &Sha256Context);
+
+    // convert to hex
+    FString HashString;
+    for (int i = 0; i < SHA256_DIGEST_LENGTH; i++) {
+        HashString += FString::Printf(TEXT("%02X"), Buffer[i]);
+    }
+    return HashString;
 }
 
 FString UAccountManager::GetSalted(const FString& In) {
