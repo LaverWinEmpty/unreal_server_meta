@@ -1,8 +1,7 @@
 #include "Server/DatabaseManager.h"
 #include "Misc/ScopeLock.h"
-#include "HAL/CriticalSection.h"
-#include "Async//Async.h"
 
+#include "mysqlx/common.h"
 
 void UDatabaseManager::Initialize(FSubsystemCollectionBase& Collection) {
 
@@ -26,16 +25,16 @@ void UDatabaseManager::Query(
     //            UE_LOG(LogTemp, Log, TEXT("Acquired a MySQL connection!")); // logging
 
     //            // set query parameter
-    //            sql::PreparedStatement* PreparedStatement = Connection->prepareStatement(TCHAR_TO_UTF8(*Query));
-    //            if (!PreparedStatement) {
+    //            sql::PreparedStatement* Statement = Connection->prepareStatement(TCHAR_TO_UTF8(*Query));
+    //            if (!Statement) {
     //                UE_LOG(LogTemp, Error, TEXT("Query PreparedStatement Create Failed"));
     //                check(false);
     //                return;
     //            }
-    //            Prepare(PreparedStatement);
+    //            Prepare(Statement);
 
     //            // get result and process
-    //            sql::ResultSet* ResultSet = PreparedStatement->executeQuery();
+    //            sql::ResultSet* ResultSet = Statement->executeQuery();
     //            if (!ResultSet) {
     //                UE_LOG(LogTemp, Error, TEXT("Query ResultSet Create Failed"));
     //                check(false);
@@ -48,7 +47,7 @@ void UDatabaseManager::Query(
 
     //            // release
     //            delete ResultSet;
-    //            delete PreparedStatement;
+    //            delete Statement;
     //            ReleaseConnection(
     //                Connection).Next([]() {
     //                    UE_LOG(LogTemp, Log, TEXT("Released the MySQL connection!"));
@@ -70,24 +69,22 @@ void UDatabaseManager::Setup(const FString& DBUser, const FString& DBPassword, c
     DB   = DBName;
     Host = DBAddress;
 
-    sql::mysql::MySQL_Driver* Driver = sql::mysql::get_mysql_driver_instance();
-    check(Driver);
+    //sql::mysql::MySQL_Driver* Driver = sql::mysql::get_mysql_driver_instance();
+    //check(Driver);
 
-    try {
-        for (int32 i = 0; i < POOL_SIZE; ++i) {
-            TSharedPtr<sql::Connection> Connection(
-                Driver->connect(TCHAR_TO_UTF8(*Host), TCHAR_TO_UTF8(*DBUser), TCHAR_TO_UTF8(*DBPassword))
-            );
-            Connection->setSchema(TCHAR_TO_UTF8(*DB)); // connection
-            Pool.Enqueue(Connection);                  // enqueue
-        }
-    }
+    //for (int32 i = 0; i < POOL_SIZE; ++i) {
+    //    TSharedPtr<sql::Connection> Connection(
+    //        Driver->connect(TCHAR_TO_UTF8(*Host), TCHAR_TO_UTF8(*DBUser), TCHAR_TO_UTF8(*DBPassword))
+    //    );
+    //    Connection->setSchema(TCHAR_TO_UTF8(*DB)); // connection
+    //    Pool.Enqueue(Connection);                  // enqueue
+    //}
 
-    //? TODO: 언리얼에서 try-catch가 되는지 확인 해야됨
-    catch (sql::SQLException& e) {
-        UE_LOG(LogTemp, Error, TEXT("MySQL Connection Pool Initialization Failed: %s"), UTF8_TO_TCHAR(e.what()));
-        return;
-    }
+    //// TODO: 언리얼에서 처리할 수 있도록 수정해야 함
+    //catch (sql::SQLException& e) {
+    //    UE_LOG(LogTemp, Error, TEXT("MySQL Connection Pool Initialization Failed: %s"), UTF8_TO_TCHAR(e.what()));
+    //    return;
+    //}
 }
 
 auto UDatabaseManager::GetConnection()->TFuture<FConnection> {

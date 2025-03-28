@@ -1,5 +1,6 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
+using System.Collections.Generic;
 using System.IO;
 using UnrealBuildTool;
 
@@ -26,25 +27,28 @@ public class Meta : ModuleRules
         /********************************************************************************************************************
 		 * ThirdParty Paths
 		 ********************************************************************************************************************/
-        string ThirdPartyPath = Path.Combine(ModuleDirectory, "ThirdParty");
+        string ThirdPartyPath = Path.Combine(ModuleDirectory, "../../ThirdParty");
         string MySqlPath      = Path.Combine(ThirdPartyPath, "MySqlConnector");
 
         /********************************************************************************************************************
 		 * ThirdParty
 		 ********************************************************************************************************************/
         string[] Includes = new string[] {
-            "Meta",                             // Root
-			Path.Combine(MySqlPath, "include"), // SQL
+            "Meta",								// Root
+			Path.Combine(MySqlPath, "include"),	// MySQL X Protocol Header
         };
 		string[] Libraries = new string[] {
-			Path.Combine(MySqlPath, "lib64/vs14/mysqlcppconn.lib"), // SQL
+			Path.Combine(MySqlPath, "lib64/vs14/mysqlcppconnx-static.lib"),	// MySQL X Protocol lib
+			Path.Combine(MySqlPath, "lib64/vs14/mysqlcppconnx.lib"),		// MySQL X Protocol dll
+			Path.Combine(MySqlPath, "lib64/vs14/libssl.lib"),				// MySQL OpenSSL
+			Path.Combine(MySqlPath, "lib64/vs14/libcrypto.lib"),			// MySQL OpenSSL
 		};
-		string[] Plugins = new string[] {
-			Path.Combine(MySqlPath, "lib64/mysqlcppconn-10-vs14.dll"), // SQL
-		};
-		//string[] Stagings = new string[] {
-		//	"$(ProjectDir)/Binaries/Win64/mysqlcppconn.dll", // SQL
-		//};
+		Dictionary<string, string> Plugins = new Dictionary<string, string>{
+			{ "mysqlcppconn-10-vs14.dll",	Path.Combine(MySqlPath, "lib64") },	// MySQL
+			{ "mysqlcppconnx-2-vs14.dll",	Path.Combine(MySqlPath, "lib64") },	// MySQL X Protocol
+			{ "libssl-3-x64.dll",			Path.Combine(MySqlPath, "lib64") },	// MySQL OpenSSL
+			{ "libcrypto-3-x64.dll",		Path.Combine(MySqlPath, "lib64") },	// MySQL OpenSSL
+        };
 
         /********************************************************************************************************************
 		 * Add
@@ -53,13 +57,11 @@ public class Meta : ModuleRules
 		PrivateDependencyModuleNames.AddRange(Sources); // add private modules
         PublicIncludePaths.AddRange(Includes);          // add include paths
         PublicAdditionalLibraries.AddRange(Libraries);  // add libraries path
-        PublicDelayLoadDLLs.AddRange(Plugins);          // add dll fiels
-
-		/********************************************************************************************************************
-		 * Packaging
-		 ********************************************************************************************************************/
-		foreach(string Path in Plugins) {
-			RuntimeDependencies.Add(Path);
-		}
+        foreach (var Plugin in Plugins) {
+            RuntimeDependencies.Add(
+                Path.Combine("$(BinaryOutputDir)", Plugin.Key), // cloned dll
+                Path.Combine(Plugin.Value, Plugin.Key)          // source dll
+            );
+        }
     }
 }

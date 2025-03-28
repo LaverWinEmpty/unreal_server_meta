@@ -1,12 +1,23 @@
 #pragma once
 
-// MySQL
-// TODO: CONCPP_BUILD_SHARED 처리
-#define CONCPP_BUILD_SHARED 0
-#undef check  // Unreal check
-#include <ThirdParty/MySqlConnector/include/mysql/jdbc.h>
-#define check(expr) UE_CHECK_IMPL(expr)  // Unreal check
-#undef CONCPP_BUILD_SHARED
+// //MySQL
+// //TODO: shipping 관련 처리
+// //TODO: CONCPP_BUILD_SHARED 처리
+//#ifndef CONCPP_BUIDL_SHARED
+//#	define CONCPP_BUILD_SHARED 0
+//#endif
+//#ifdef check
+//#	undef check  // Unreal check
+//#	include <ThirdParty/MySqlConnector/include/mysql/jdbc.h>
+//#	ifdef UE_CHECK_IMPL
+//#		define check(expr) UE_CHECK_IMPL(expr)  // Unreal check
+//#	endif
+//#else
+//#	include <ThirdParty/MySqlConnector/include/mysql/jdbc.h>
+//#endif
+//#undef CONCPP_BUILD_SHARED
+
+//#include "mysqlx/common.h"
 
 // use C++ standard for MySQL
 #include <string>
@@ -14,11 +25,19 @@
 
 #include "CoreMinimal.h"
 #include "Manager/Manager.h"
+#include "HAL/CriticalSection.h"
+#include "Async//Async.h"
 #include "DatabaseManager.generated.h"
 
 /*********************************************************************************************************************
  * @brief DB 매니저입니다.
  *********************************************************************************************************************/
+namespace sql {
+	class PreparedStatement;
+	class ResultSet;
+	class Connection;
+}
+
 UCLASS()
 class META_API UDatabaseManager : public UManager {
 	GENERATED_BODY()
@@ -72,4 +91,4 @@ private:
 	FString User;
 	FString PW;
 	FString DB;
-};
+};	
