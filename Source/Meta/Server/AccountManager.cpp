@@ -172,7 +172,7 @@ void UAccountManager::SignOut(const FString& ID, const FString& PW) {
 
 void UAccountManager::PostAuthenticate(int8 Type, int8 Result) {
     // 응답처리
-    UE_LOG(LogTemp, Error, TEXT("Call PostAuthenticate"));
+    UE_LOG(LogTemp, Log, TEXT("Call PostAuthenticate"));
 
     // TODO: 이 함수 진입 시점에서 스레드 안전한지 검사 필요함
     
