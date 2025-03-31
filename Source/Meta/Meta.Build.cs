@@ -14,12 +14,17 @@ public class Meta : ModuleRules
 		 * Module
 		 ********************************************************************************************************************/
 		string[] Headers = new string[] {
+			// 기본
 			"Core",
 			"CoreUObject",
 			"Engine",
 			"InputCore",
 			"EnhancedInput",
-            "PlatformCryptoOpenSSL",
+
+			// UI
+            "UMG",
+
+			// 암호화
             "OpenSSL",
         };
 		string[] Sources = new string[] {

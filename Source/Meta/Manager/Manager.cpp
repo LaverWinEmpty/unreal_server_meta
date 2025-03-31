@@ -1,6 +1,7 @@
 #include "Manager/Manager.h"
 
 UWorld* UManager::GetWorldSafe(const UObject* Context) {
+    check(Context);
     UWorld* World = Context->GetWorld();
 #ifdef NDEBUG
     check(World);

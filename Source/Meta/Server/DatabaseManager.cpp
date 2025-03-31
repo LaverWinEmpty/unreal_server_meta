@@ -46,8 +46,8 @@ void UDatabaseManager::Setup(
 void UDatabaseManager::Query(
     const FString&                           In,
     TFunction<void(sql::PreparedStatement*)> Prepare,
-    TFunction<void(sql::ResultSet*)>         Process)
-{
+    TFunction<void(sql::ResultSet*)>         Process
+) {
     sql::SQLString UTF8Query = TCHAR_TO_UTF8(*In); // convert
     // async
     TFuture<FConnection> Connection = GetConnection();

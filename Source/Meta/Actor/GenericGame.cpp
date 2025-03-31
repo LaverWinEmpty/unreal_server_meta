@@ -17,7 +17,7 @@ void AGenericGame::BeginPlay() {
 		// UManager::Instance<UDatabaseManager>(this)->Setup();
 
 		// 테스트
-		UManager::Instance<UAccountManager>(this)->Authenticate(EAR_SignUp, "admin", "1q2w");
+		UManager::Instance<UAccountManager>(this)->Authenticate(EAA_SignUp, "admin", "1q2w");
 	}
 
 }

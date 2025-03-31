@@ -21,7 +21,8 @@ void AGenericController::BeginPlay() {
 			UE_LOG(LogTemp, Log, TEXT("Server에 Controller가 생성되었습니다."));
 			break;
 
-		default: checkNoEntry();
+		default:
+			checkNoEntry();
 	}
 
 	// TODO: 클라면 경우 요청합니다.
@@ -33,3 +34,21 @@ void AGenericController::ConnectRequest_Implementation(const FString& IP, int32 
 
 void AGenericController::InputResponse_Implementation() {
 }
+
+void AGenericController::OnAuthenticate(uint8 Type, uint8 Result) {
+	check(false);
+
+	// 임시로 로그만
+	/*if (Result != 0)*/ {
+		// 메세지 처리
+		UE_LOG(LogTemp, Warning, _T("Response: %s: %s"),
+			*UAccountManager::ConvertActionTypeName(Type),
+			*UAccountManager::GetResultMessage(Result)
+		);
+	}
+
+	//else {
+	//	// 처리
+	//}
+}
+ 

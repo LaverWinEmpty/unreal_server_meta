@@ -29,4 +29,7 @@ public:
 	UFUNCTION(NetMulticast, Unreliable)
 	void InputResponse();
 	void InputResponse_Implementation();
+
+public:
+	void OnAuthenticate(uint8 Type, uint8 Result);
 };
