@@ -148,7 +148,7 @@ void UAccountManager::SignUp(const FString& ID, const FString& PW) {
             if (In->next()) {
                 AsyncTask(ENamedThreads::GameThread,
                     [this]() {
-                        PostAuthenticate(EAA_LogIn, EAR_AlreadyExist); // server to client
+                        PostAuthenticate(EAA_SignUp, EAR_AlreadyExist); // server to client
                     }
                 );
             }
@@ -165,7 +165,7 @@ void UAccountManager::SignUp(const FString& ID, const FString& PW) {
                         // 싱글턴이니까 안전할 거라 믿고 this call
                         AsyncTask(ENamedThreads::GameThread,
                             [this]() {
-                                PostAuthenticate(EAA_LogIn, EAR_Suceeded); // server to client
+                                PostAuthenticate(EAA_SignUp, EAR_Suceeded); // server to client
                             } // end labda
                         ); // and AysncTasck
                     } // end lambda
