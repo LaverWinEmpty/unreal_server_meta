@@ -8,10 +8,6 @@
 #include "Server/AccountManager.h"
 
 void ULoginUI::NativeConstruct() {
-	// check: admin 등의 목적으로 사용 가능하나 현재는 클라이언트만 로그인 창이 뜨도록 처리했습니다
-	if (UManager::IsServer(this)) {
-		checkf(false, _T("Created log-in UI in Server, Mode: [%s]"), UManager::GetNetModeString(this));
-	}
 	InputPW->SetIsPassword(true);
 }
 

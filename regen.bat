@@ -8,7 +8,7 @@ set "ue_path=D:\ue5.4.3"
 set "uproject_path=%~dp0Meta.uproject"
 
 :: keep list
-set "keep_files=Meta.uproject .gitignore regen.bat"
+set "keep_files=Meta.uproject .gitignore regen.bat Meta.sln"
 
 :: keep list
 set "keep_folders=Source Content Config ThirdParty Build"

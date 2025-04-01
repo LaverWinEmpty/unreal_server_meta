@@ -26,7 +26,10 @@ public:
 	UEditableTextBox* InputPW;
 
     UPROPERTY(meta = (BindWidget))
-    UButton* LoginButton;
+    UButton* SignUpButton;
+
+    UPROPERTY(meta = (BindWidget))
+    UButton* LogInButton;
 
     UPROPERTY(meta = (BindWidget))
     UTextBlock* ResultText;

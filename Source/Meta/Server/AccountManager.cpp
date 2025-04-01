@@ -1,9 +1,9 @@
-#include "AccountManager.h"
+#include "Client/LoginController.h"
+#include "Server/AccountManager.h"
 #include "Server/DatabaseManager.h"
-#include "Actor/GenericGame.h"
-#include "Actor/GenericCharacter.h"
-#include "Actor/GenericController.h"
+#include "Generic/GenericGame.h"
 #include "Misc/SecureHash.h"
+// #include "Actor/GenericCharacter.h"
 // #include "EncryptionContextOpenSSL.h"
 
 #define UI UI_ST
@@ -83,22 +83,16 @@ void UAccountManager::AuthenticateRequest_Implementation(int8 Type, const FStrin
     }
 }
 
-
 void UAccountManager::AuthenticateResponse_Implementation(int8 Type, int8 Result) {
     UE_LOG(LogTemp, Log, TEXT("서버에서 클라이언트로 결과를 보냅니다"));
-    if (IsClient()) {
-        UE_LOG(LogTemp, Error, TEXT("응답 함수가 ClientMode에서 호출되었습니다."));
-        check(false);
-    }
-
     if (IsDedicated()) {
         UE_LOG(LogTemp, Error, TEXT("응답 처리 함수가 DedicatedMode에서 호출되었습니다."));
         check(false);
     }
 
-    AGenericController* PC = Cast<AGenericController>(UManager::GetWorldSafe(this)->GetFirstPlayerController());
+    ALoginController* PC = Cast<ALoginController>(UManager::GetWorldSafe(this)->GetFirstPlayerController());
     if (!PC) {
-        UE_LOG(LogTemp, Error, TEXT("해당 클라이언트의 Controller가 GenericController가 아닙니다."));
+        UE_LOG(LogTemp, Error, TEXT("해당 클라이언트의 Controller가 LoginController가 아닙니다."));
         check(false);
         return;
     }
@@ -123,9 +117,15 @@ void UAccountManager::LogIn(const FString& ID, const FString& PW) {
             if (In->next()) {
                 Result = EAR_Suceeded;
             }
-            PostAuthenticate(EAA_LogIn, Result); // 싱글턴이니까 안전할 거라 믿고 this call
-        }
-    );
+            // GameThread에서 이어서 처리
+            // 싱글턴이니까 안전할 거라 믿고 this call
+            AsyncTask(ENamedThreads::GameThread,
+                [this, Result]() {
+                    PostAuthenticate(EAA_LogIn, Result);
+                } // end labda
+            ); // and AysncTasck
+        } // end lambda
+    ); // end Query
 }
 
 void UAccountManager::LogOut(const FString& ID, const FString& PW) {
@@ -143,8 +143,8 @@ void UAccountManager::SignUp(const FString& ID, const FString& PW) {
             In->setString(1, TCHAR_TO_UTF8(*ID));
             In->setString(2, TCHAR_TO_UTF8(*HashedPW));
         },
-        // callback: 매니저 클래스니까 믿고 this 캡쳐
-        [&](sql::ResultSet* In) {
+        // Manager is reference
+        [this, ID, HashedPW](sql::ResultSet* In) {
             if (In->next()) {
                 PostAuthenticate(EAA_SignUp, EAR_AlreadyExist); // server to client
             }
@@ -152,17 +152,23 @@ void UAccountManager::SignUp(const FString& ID, const FString& PW) {
             else {
                 UManager::Instance<UDatabaseManager>(this)->Query(
                     "INSERT INTO user_tbl VALUES (?, ?)",
-                    [&](sql::PreparedStatement* In) {
+                    [=](sql::PreparedStatement* In) {
                         In->setString(1, TCHAR_TO_UTF8(*ID));
                         In->setString(2, TCHAR_TO_UTF8(*HashedPW));
                     },
                     [&](sql::ResultSet*) {
-                        PostAuthenticate(EAA_SignUp, EAR_Suceeded); // server to client
-                    }
-                );
-            }
-        }
-    );
+                        // GameThread에서 이어서 처리
+                        // 싱글턴이니까 안전할 거라 믿고 this call
+                        AsyncTask(ENamedThreads::GameThread,
+                            [this]() {
+                                PostAuthenticate(EAA_LogIn, EAR_Suceeded);
+                            } // end labda
+                        ); // and AysncTasck
+                    } // end lambda
+                ); // end Query
+            } // end lambda
+        } // end else
+    ); // end Query
 }
 
 void UAccountManager::SignOut(const FString& ID, const FString& PW) {
@@ -176,9 +182,18 @@ void UAccountManager::PostAuthenticate(int8 Type, int8 Result) {
 
     // TODO: 이 함수 진입 시점에서 스레드 안전한지 검사 필요함
     
-    // 서버에서 send 전에 미리 처리할 작업을 여기서 진행합니다.
-    switch(Type) {
+    if (Result == EAR_Suceeded) {
+        // 서버에서 send 전에 미리 처리할 작업을 여기서 진행합니다.
+        switch (Type) {
         case EAA_LogIn:
+            // 유저라면 OpenLevel
+            if (IsUser()) {
+                UManager::GetWorldSafe(this)-> // 클라이언트 World의
+                    GetFirstPlayerController()-> // 컨트롤러의
+                    ClientTravel("ClientEntry", ETravelType::TRAVEL_Absolute);
+            }
+            else check(false); // dedicated 에서 호출됨
+
             // DB에서 캐릭터 목록을 가져옵니다.
             break;
         case EAA_LogOut:
@@ -188,7 +203,9 @@ void UAccountManager::PostAuthenticate(int8 Type, int8 Result) {
         case EAA_SignOut: break;
         default:
             checkNoEntry();
+        }
     }
+
     AuthenticateResponse(Type, Result); // Send
 }
 

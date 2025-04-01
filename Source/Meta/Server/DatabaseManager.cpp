@@ -1,4 +1,5 @@
 #include "Server/DatabaseManager.h"
+#include "Async/Async.h"
 #include "Misc/ScopeLock.h"
 
 //void UDatabaseManager::Initialize(FSubsystemCollectionBase& Collection) {
@@ -9,8 +10,8 @@ void UDatabaseManager::Setup(
     const FString& DBUser,
     const FString& DBPassword,
     const FString& DBName,
-    const FString& DBAddress)
-{
+    const FString& DBAddress
+) {
     if (!IsServer(this)) {
         return;
     }
@@ -37,12 +38,14 @@ void UDatabaseManager::Setup(
     //    return;
     //}
 
-    // 쿼리
+    // 테이블 생성 쿼리 테스트용
     Query("CREATE DATABASE IF NOT EXISTS DB;");
     Query("USE DB;");
-    Query("CREATE TABLE IF NOT EXISTS USER_TBL(USER_ID VARCHAR(32) PRIMARY KEY, USER_PW VARCHAR(64));");
+    Query("CREATE TABLE IF NOT EXISTS user_tbl(user_id VARCHAR(32) PRIMARY KEY, user_pw VARCHAR(64));");
+    Query("CREATE TABLE IF NOT EXISTS player_tbl(name VARCHAR(32) PRIMARY KEY NOT NULL, owner_id VARCHAR(32));");
 }
 
+// 풀버전
 void UDatabaseManager::Query(
     const FString&                           In,
     TFunction<void(sql::PreparedStatement*)> Prepare,
@@ -56,9 +59,9 @@ void UDatabaseManager::Query(
             FConnection Connection = In.Get();
             OnQuery(*Connection, UTF8Query, Prepare, Process);
             ReleaseConnection(Connection);
-        }
-    );
-}
+        } // end lambda
+    ); // end call Connection.Then
+} // end declare Execute
 
 auto UDatabaseManager::GetConnection()->TFuture<FConnection> {
     return Async(EAsyncExecution::TaskGraph,
@@ -148,6 +151,5 @@ void UDatabaseManager::OnQuery(
         delete ResultSet;
         delete Statement;
     }
-
     UE_LOG(LogTemp, Log, TEXT("Query executed successfully."));
 }

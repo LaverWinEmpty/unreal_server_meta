@@ -9,6 +9,9 @@
 /*********************************************************************************************************************
  * Manager Base Class with Utilities
  *********************************************************************************************************************/
+#define DECLARE_SPECIALIZED_GET_INSTANCE_METHOD(TYPE)\
+	static TYPE* Instance(const UObject* IN) { return UManager::Instance<TYPE>(IN); }
+
 UCLASS()
 class META_API UManager : public UGameInstanceSubsystem
 {

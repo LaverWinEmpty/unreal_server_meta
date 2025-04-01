@@ -6,7 +6,6 @@
 #include "GameFramework/GameMode.h"
 #include "GameIntro.generated.h"
 
-class ULoginUI;
 UCLASS()
 class META_API AGameIntro : public AGameMode
 {
@@ -15,12 +14,8 @@ class META_API AGameIntro : public AGameMode
 public:
 	AGameIntro();
 
-public:
-	void BeginPlay() override;
+//public:
+//	void BeginPlay() override;
+//
 
-public:
-	void OnLogin();
-
-private:
-	TSubclassOf<UUserWidget> LoginWidgetClass;
 };

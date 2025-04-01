@@ -59,17 +59,22 @@ public:
 public:
 	/**
 	 * @brief call query
-	 * 
+	 * @note  async, lambda recommanded copy
 	 * @param [in] Query   e.g. "SELECT * FROM TABLE WHERE KEY = ?"
-	 * @param [in] Prepare e.g  [](sql::PreparedStatement* In) { In->setInt(1, number); }
-	 * @param [in] Process e.g. [](sql::ResultSet* In) { while(In->next()) { ... } }
-	 * @param [in] Post    Called when async is finished.
+	 * @param [in] Prepare e.g  [=](sql::PreparedStatement* In) { In->setInt(1, number); }
+	 * @param [in] Process e.g. [&](sql::ResultSet* In) { while(In->next()) { ... } }
 	 */
 	void Query(
 		const FString&                           Query,
 		TFunction<void(sql::PreparedStatement*)> Prepare = nullptr,
 		TFunction<void(sql::ResultSet*)>         Process = nullptr
 	);
+
+public:
+	// get GameThread lambda
+	auto PostQuery(ENamedThreads::Type In = ENamedThreads::GameThread) {
+
+	}
 
 public:
 	TFuture<FConnection> GetConnection();
