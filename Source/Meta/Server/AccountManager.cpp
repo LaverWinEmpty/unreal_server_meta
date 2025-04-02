@@ -1,6 +1,6 @@
-#include "Client/LoginController.h"
 #include "Server/AccountManager.h"
 #include "Server/DatabaseManager.h"
+#include "Client/LoginController.h"
 #include "Generic/GenericGame.h"
 #include "Misc/SecureHash.h"
 // #include "Actor/GenericCharacter.h"
@@ -162,7 +162,7 @@ void UAccountManager::SignUp(const FString& ID, const FString& PW) {
                     },
                     [&](sql::ResultSet*) {
                         // GameThread에서 이어서 처리
-                        // 싱글턴이니까 안전할 거라 믿고 this call
+                        // 싱글턴이니까 life cycle 안전할 거라 믿고 this call
                         AsyncTask(ENamedThreads::GameThread,
                             [this]() {
                                 PostAuthenticate(EAA_SignUp, EAR_Suceeded); // server to client
