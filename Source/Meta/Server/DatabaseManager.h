@@ -1,16 +1,15 @@
 #pragma once
 
-#pragma push_macro("check")
+#pragma push_macro("check")       // backup Unreal check
 #undef check                      // Unreal macro conflicts with MySQL function
 #ifndef CONCPP_BUILD_SHARED       // MySQL build option
 #    define CONCPP_BUILD_SHARED 1 // not build, dummy value
-#    include <mysql/jdbc.h>
-#    undef CONCPP_BUILD_SHARED
+#    include <mysql/jdbc.h>       // include MySQL
+#    undef CONCPP_BUILD_SHARED    // undef for safe
 #else
 #    include <mysql/jdbc.h>
 #endif
 #pragma pop_macro("check")
-
 
 #include "CoreMinimal.h"
 #include "Manager/Manager.h"

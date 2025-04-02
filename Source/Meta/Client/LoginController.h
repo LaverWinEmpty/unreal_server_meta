@@ -16,9 +16,6 @@ UCLASS()
 class META_API ALoginController: public APlayerController {
     GENERATED_BODY()
 
-private:
-    static const FString ServerIP;
-
 public:
     ALoginController();
 

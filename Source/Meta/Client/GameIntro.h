@@ -1,6 +1,8 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
+
+/*********************************************************************************************************************
+ * @brief 클라이언트 시작 모드입니다.
+ *********************************************************************************************************************/
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameMode.h"
@@ -10,12 +12,7 @@ UCLASS()
 class META_API AGameIntro : public AGameMode
 {
 	GENERATED_BODY()
-	
+
 public:
 	AGameIntro();
-
-//public:
-//	void BeginPlay() override;
-//
-
 };

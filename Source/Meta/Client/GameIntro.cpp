@@ -1,14 +1,7 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #include "Client/GameIntro.h"
-#include "Client/LoginController.h"
-
+#include "Client/GameIntroHandler.h"
 
 AGameIntro::AGameIntro() {
     DefaultPawnClass      = nullptr;
-    PlayerControllerClass = ALoginController::StaticClass();
+    PlayerControllerClass = AGameIntroHandler::StaticClass();
 }
-
-//void AGameIntro::BeginPlay() {
-//
-//}

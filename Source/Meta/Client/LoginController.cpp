@@ -6,9 +6,6 @@
 #include "Components/EditableTextBox.h"
 #include "Components/TextBlock.h"
 
-// TODO: 추후 외부에서 세팅하는 것으로 변경
-const FString ALoginController::ServerIP = TEXT("127.0.0.1:7777");
-
 ALoginController::ALoginController() {
     // duplicated 오류 수정해야됨
     static ConstructorHelpers::FClassFinder<UUserWidget> Finder(TEXT("/Game/Assets/UI/BP_LoginUI"));
@@ -25,10 +22,6 @@ void ALoginController::BeginPlay() {
 
     // 마우스 보이게
     GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
-
-    // 서버 연결 -> Client Mode
-    FString URL = FString::Printf(TEXT("%s"), *ServerIP);
-    ClientTravel(URL, ETravelType::TRAVEL_Absolute);
 
     // 로그인 위젯 생성
     Widget = CreateWidget<ULoginUI>(GetWorld(), LoginWidgetClass);
