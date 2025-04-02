@@ -12,14 +12,9 @@ ALoginController::ALoginController() {
     if (Finder.Succeeded()) {
         LoginWidgetClass = Finder.Class;
     }
-
-    PrimaryActorTick.bCanEverTick = true;
-    bReplicates                   = true;
 }
 
 void ALoginController::BeginPlay() {
-    Super::BeginPlay();
-
     // 마우스 보이게
     GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
 
@@ -37,28 +32,6 @@ void ALoginController::BeginPlay() {
     }
 }
 
-void ALoginController::ConnectRequest_Implementation(const FString& IP, int32 Port) {}
-
-void ALoginController::InputResponse_Implementation() {}
-
-// 응답 받고 처리되는 함수입니다.
-void ALoginController::OnAuthenticate(uint8 Type, uint8 Result) {
-    // has error
-    if (Result) {
-        Widget->ResultText->SetColorAndOpacity(FColor::Red);
-    }
-
-    // 로그인의 경우레벨 변경됨
-    else if(Type != EAA_LogIn){
-        Widget->ResultText->SetColorAndOpacity(FColor::White);
-    }
-
-    // 결과 출력
-    Widget->ResultText->SetText(
-        FText::FromString(UAccountManager::GetResultMessage(Result))
-    );
-}
-
 void ALoginController::OnLogIn() {
     FString ID = Widget->InputID->GetText().ToString();
     FString PW = Widget->InputPW->GetText().ToString();
@@ -71,9 +44,6 @@ void ALoginController::OnSignUp() {
     UAccountManager::Instance(this)->Authenticate(EAA_SignUp, ID, PW);
 }
 
-void ALoginController::OnLogOut() {
-}
-
 void ALoginController::OnCreateCharacter() {
 }
 
@@ -81,4 +51,23 @@ void ALoginController::OnCreateRoom() {
 }
 
 void ALoginController::OnEnterRoom() {
+}
+
+void ALoginController::OnAuthenticate(int8 Type, int8 Result) {
+    check(Type != EAA_LogOut) // 현재 로그인 상태가 아님
+
+    // has error
+    if (Result) {
+        Widget->ResultText->SetColorAndOpacity(FColor::Red);
+    }
+
+    // 로그인의 경우레벨 변경됨
+    else if (Type != EAA_LogIn) {
+        Widget->ResultText->SetColorAndOpacity(FColor::White);
+    }
+
+    // 결과 출력
+    Widget->ResultText->SetText(
+        FText::FromString(UAccountManager::GetResultMessage(Result))
+    );
 }

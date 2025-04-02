@@ -3,19 +3,22 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Client/LoginController.h"
+#include "GameFramework/PlayerController.h"
 #include "GenericController.generated.h"
 
 /*********************************************************************************************************************
  * @brief 범용 컨트롤러입니다, 서버 클라이언트 모두 사용
  *********************************************************************************************************************/
 UCLASS()
-class META_API AGenericController: public ALoginController {
+class META_API AGenericController: public APlayerController {
     GENERATED_BODY()
 
-//public:
-//    AGenericController();
+public:
+    AGenericController();
 
-//public:
-//    void BeginPlay() override;
+public:
+    void BeginPlay() override;
+
+public:
+    void OnLogOut(int8 Type, int8 Result); // response
 };
