@@ -26,8 +26,6 @@
 //	class Connection;
 //}
 
-// TODO: Query 가변인자 처리
-
 UCLASS()
 class META_API UDatabaseManager : public UManager {
 	GENERATED_BODY()

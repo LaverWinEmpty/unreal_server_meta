@@ -9,6 +9,8 @@
 class UButton;
 class UListView;
 
+// TOOD: 오타수정
+
 UCLASS()
 class META_API ULobyUI : public UUserWidget
 {
@@ -19,11 +21,17 @@ public:
 	UButton* LogOutButton;
 
 	UPROPERTY(meta = (BindWidget))
-	UButton* CreateRoomButton;
-	
-	UPROPERTY(meta = (BindWidget))
-	UButton* EnterRoomButton;
+	UButton* CreateCharacterButton;
 
-	UPROPERTY(meta = (BindWidget))
-	UListView* Rooms;
+	//UPROPERTY(meta = (BindWidget))
+	//UButton* CreateRoomButton;
+	
+	//UPROPERTY(meta = (BindWidget))
+	//UButton* EnterRoomButton;
+
+	//UPROPERTY(meta = (BindWidget))
+	//UListView* Rooms;
+
+	UFUNCTION()
+	void OnCreateCharacter();
 };
