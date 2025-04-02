@@ -1,29 +1,16 @@
 #pragma once
 
-//MySQL
-//TODO: shipping 관련 처리
-//TODO: CONCPP_BUILD_SHARED 처리
-#ifndef CONCPP_BUIDL_SHARED
-#	define CONCPP_BUILD_SHARED 0
-#endif
-#ifdef check
-#	undef check  // Unreal check
-#	include <mysql/jdbc.h>
-#	ifdef UE_CHECK_IMPL
-#		define check(expr) UE_CHECK_IMPL(expr)  // Unreal check
-#	endif
+#pragma push_macro("check")
+#undef check                      // Unreal macro conflicts with MySQL function
+#ifndef CONCPP_BUILD_SHARED       // MySQL build option
+#    define CONCPP_BUILD_SHARED 1 // not build, dummy value
+#    include <mysql/jdbc.h>
+#    undef CONCPP_BUILD_SHARED
 #else
-#	include <mysql/jdbc.h>
+#    include <mysql/jdbc.h>
 #endif
-#undef CONCPP_BUILD_SHARED
+#pragma pop_macro("check")
 
-//#include "mysqlx/common.h"
-// #include <mysqlx/xdevapi.h>
-// #include "mysql/jdbc.h"
-
-// use C++ standard for MySQL
-#include <string>
-#include <memory>
 
 #include "CoreMinimal.h"
 #include "Manager/Manager.h"

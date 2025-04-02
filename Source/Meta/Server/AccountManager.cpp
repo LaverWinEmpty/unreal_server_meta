@@ -75,6 +75,8 @@ void UAccountManager::Authenticate(EAuthAction Type, const FString& ID, const FS
 }
 
 void UAccountManager::AuthenticateRequest_Implementation(int8 Type, const FString& ID, const FString& PW) {
+    check(IsServer()); // Request의 실제는 서버에서 처리
+
     switch(Type) {
         case EAA_LogIn:   LogIn(ID, PW);   break;
         case EAA_LogOut:  LogOut(ID, PW);  break;
@@ -84,6 +86,8 @@ void UAccountManager::AuthenticateRequest_Implementation(int8 Type, const FStrin
 }
 
 void UAccountManager::AuthenticateResponse_Implementation(int8 Type, int8 Result) {
+    check(IsUser()); // Request의 실제는 사용자쪽에서 처리
+
     UE_LOG(LogTemp, Log, TEXT("서버에서 클라이언트로 결과를 보냅니다"));
     if (IsDedicated()) {
         UE_LOG(LogTemp, Error, TEXT("응답 처리 함수가 DedicatedMode에서 호출되었습니다."));

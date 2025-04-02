@@ -51,6 +51,8 @@ void UDatabaseManager::Query(
     TFunction<void(sql::PreparedStatement*)> Prepare,
     TFunction<void(sql::ResultSet*)>         Process
 ) {
+    check(IsServer()); // DB는 Server에서 실행되어야 함
+
     sql::SQLString UTF8Query = TCHAR_TO_UTF8(*In); // convert
     // async
     TFuture<FConnection> Connection = GetConnection();
@@ -103,12 +105,7 @@ void UDatabaseManager::OnQuery(
         }
         
         sql::Statement* Statement = Connection.createStatement();
-        try {
-            Statement->execute(Query);
-        }
-        catch (const sql::SQLException& e) {
-            UE_LOG(LogTemp, Error, _T("%s"), *FString(e.what()));
-        }
+        Statement->execute(Query); // C++ std except
         delete Statement;
     }
 
@@ -116,35 +113,25 @@ void UDatabaseManager::OnQuery(
         sql::PreparedStatement* Statement = nullptr;
         sql::ResultSet*         ResultSet = nullptr;
         // set query parameter
-        try {
-            Statement = Connection.prepareStatement(Query);
-            if (!Statement) {
-                UE_LOG(LogTemp, Error, TEXT("Query PreparedStatement Create Failed"));
-                check(false);
-                return;
-            }
-            Prepare(Statement);
+        Statement = Connection.prepareStatement(Query);
+        if (!Statement) {
+            UE_LOG(LogTemp, Error, TEXT("Query PreparedStatement Create Failed"));
+            check(false);
+            return;
         }
-        catch (const sql::SQLException& e) {
-            UE_LOG(LogTemp, Error, TEXT("Query Post-Prepare Failed: %s"), *FString(e.what()));
-        }
+        Prepare(Statement); // C++ std except
 
         // get result and process
-        try {
-            ResultSet = Statement->executeQuery();
-            if (!ResultSet) {
-                UE_LOG(LogTemp, Error, TEXT("Query ResultSet Create Failed"));
-                check(false);
-                return;
-            }
-
-            // else ignore
-            if (Process) {
-                Process(ResultSet);
-            }
+        ResultSet = Statement->executeQuery();
+        if (!ResultSet) {
+            UE_LOG(LogTemp, Error, TEXT("Query ResultSet Create Failed"));
+            check(false);
+            return;
         }
-        catch (const sql::SQLException& e) {
-            UE_LOG(LogTemp, Error, TEXT("Query Post-Process Failed: %s"), *FString(e.what()));
+
+        // else ignore
+        if (Process) {
+            Process(ResultSet); // C++ std except
         }
 
         // release
