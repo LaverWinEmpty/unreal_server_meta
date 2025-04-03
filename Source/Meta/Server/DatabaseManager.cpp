@@ -2,9 +2,10 @@
 #include "Async/Async.h"
 #include "Misc/ScopeLock.h"
 
-//void UDatabaseManager::Initialize(FSubsystemCollectionBase& Collection) {
-//    
-//}
+void UDatabaseManager::Initialize(FSubsystemCollectionBase& Collection) {
+    Super::Initialize(Collection);
+    Setup();
+}
 
 void UDatabaseManager::Setup(
     const FString& DBUser,

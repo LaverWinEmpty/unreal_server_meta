@@ -110,7 +110,7 @@ void UAccountManager::LogIn(const FString& ID, const FString& PW) {
     FString HashedPW = PasswordSHA256(PW);
 
     // Check account
-    UManager::Instance<UDatabaseManager>(this)->Query(
+    UDatabaseManager::Instance(this)->Query(
         "SELECT * FROM user_tbl WHERE user_id = ? and user_pw = ?",
         [=](sql::PreparedStatement* In) {
             In->setString(1, TCHAR_TO_UTF8(*ID));
@@ -141,7 +141,7 @@ void UAccountManager::SignUp(const FString& ID, const FString& PW) {
     EAuthResult Result = EAR_Uknown;
 
     // Check account
-    UManager::Instance<UDatabaseManager>(this)->Query(
+    UDatabaseManager::Instance(this)->Query(
         "SELECT * FROM user_tbl WHERE user_id = ? and user_pw = ?",
         [=](sql::PreparedStatement* In) {
             In->setString(1, TCHAR_TO_UTF8(*ID));
@@ -158,7 +158,7 @@ void UAccountManager::SignUp(const FString& ID, const FString& PW) {
             }
             // Insert account
             else {
-                UManager::Instance<UDatabaseManager>(this)->Query(
+                UDatabaseManager::Instance(this)->Query(
                     "INSERT INTO user_tbl VALUES (?, ?)",
                     [=](sql::PreparedStatement* In) {
                         In->setString(1, TCHAR_TO_UTF8(*ID));
@@ -198,7 +198,7 @@ void UAccountManager::PostAuthenticate(int8 Type, int8 Result) {
             if (IsUser()) {
                 UManager::GetWorldSafe(this)-> // 클라이언트 World의
                     GetFirstPlayerController()-> // 컨트롤러의
-                    ClientTravel("ClientEntry", ETravelType::TRAVEL_Absolute);
+                    ClientTravel("LobbyLevel", ETravelType::TRAVEL_Absolute);
             }
             else check(false); // dedicated 에서 호출됨
 

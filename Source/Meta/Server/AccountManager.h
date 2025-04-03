@@ -15,7 +15,7 @@ class META_API UAccountManager : public UManager {
     GENERATED_BODY()
 
 public:
-    static UAccountManager* Instance(UObject* In) { return UManager::Instance<UAccountManager>(In); }
+    DECLARE_MANAGER_GET_INSTANCE(UAccountManager);
 
 public:
     enum EAuthAction : int8 {

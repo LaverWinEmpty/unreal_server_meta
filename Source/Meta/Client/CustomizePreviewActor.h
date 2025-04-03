@@ -3,13 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "GameFramework/Pawn.h"
 #include "CustomizePreviewActor.generated.h"
 
 class USkeletalMeshComponent;
 
 UCLASS()
-class META_API ACustomizePreviewActor : public AActor
+class META_API ACustomizePreviewActor : public APawn
 {
 	GENERATED_BODY()
 	
@@ -26,7 +26,16 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 public:
+	void SetBodyMesh();
+	void SetEmotionMesh(USkeletalMesh*);
+	void SetUpperMesh(USkeletalMesh*);
+	void SetLowerMesh(USkeletalMesh*);
+	void SetShoesMesh(USkeletalMesh*);
+
+public:
 	USkeletalMeshComponent* Body;
 	USkeletalMeshComponent* Emotion;
-	USkeletalMeshComponent* Outfit;
+	USkeletalMeshComponent* Upper;
+	USkeletalMeshComponent* Lower;
+	USkeletalMeshComponent* Shoes;
 };

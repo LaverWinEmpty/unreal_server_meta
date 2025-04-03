@@ -13,7 +13,7 @@ void ULoginUI::NativeConstruct() {
 
 // to server
 void ULoginUI::OnLoginButtonClicked_Implementation(const FString& ID, const FString& PW) {
-	UManager::Instance<UAccountManager>(this)->Authenticate(EAA_LogIn, ID, PW);
+	UAccountManager::Instance(this)->Authenticate(EAA_LogIn, ID, PW);
 }
 
 // from server

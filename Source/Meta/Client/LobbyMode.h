@@ -6,6 +6,7 @@
 #include "GameFramework/GameMode.h"
 #include "LobbyMode.generated.h"
 
+class UCharacterCustomizeUI;
 
 UCLASS()
 class META_API ALobbyMode : public AGameMode
@@ -14,26 +15,4 @@ class META_API ALobbyMode : public AGameMode
 	
 public:
 	ALobbyMode();
-
-public:
-	void BeginPlay() override;
-
-private:
-	AActor* PreviewActor;
-
-private:
-	/*UAnimationAsset* */
-	UAnimationAsset* IdleAnimationAsset;
-	
-private:
-	TArray<USkeletalMesh*> EmotionAssets;
-	TArray<USkeletalMesh*> UpperAssets;
-	TArray<USkeletalMesh*> LowerAssets;
-	TArray<USkeletalMesh*> ShoesAssets;
-
-private:
-	TArray<TObjectPtr<USkeletalMeshComponent>> Emotions;
-	TArray<TObjectPtr<USkeletalMeshComponent>> Uppers;
-	TArray<TObjectPtr<USkeletalMeshComponent>> Lowers;
-	TArray<TObjectPtr<USkeletalMeshComponent>> Shoes;
 };

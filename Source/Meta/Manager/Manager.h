@@ -9,15 +9,16 @@
 /*********************************************************************************************************************
  * Manager Base Class with Utilities
  *********************************************************************************************************************/
-#define DECLARE_SPECIALIZED_GET_INSTANCE_METHOD(TYPE)\
-	static TYPE* Instance(const UObject* IN) { return UManager::Instance<TYPE>(IN); }
+
+#define DECLARE_MANAGER_GET_INSTANCE(TYPE)\
+    static TYPE* Instance(const UObject* CTX) { return UManager::Instance<TYPE>(CTX); }
 
 UCLASS()
 class META_API UManager : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
 
-public:
+protected:
 	template<typename T> static T* Instance(const UObject* In); //!< get subsystem
 
 public:

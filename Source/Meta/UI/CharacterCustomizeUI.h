@@ -7,7 +7,7 @@
 #include "CharacterCustomizeUI.generated.h"
 
 class UButton;
-class UTextBlock;
+class UEditableText;
 
 UCLASS()
 class META_API UCharacterCustomizeUI : public UUserWidget
@@ -15,7 +15,17 @@ class META_API UCharacterCustomizeUI : public UUserWidget
 	GENERATED_BODY()
 	
 public:
-	UPROPERTY(meta = (BindWidget)) UTextBlock* EmotionText;
-	UPROPERTY(meta = (BindWidget)) UButton*    EmotionNextButton;
-	UPROPERTY(meta = (BindWidget)) UButton*    EmotionPrevButton;
+	UPROPERTY(meta = (BindWidget)) UButton* EmotionNextButton;
+	UPROPERTY(meta = (BindWidget)) UButton* EmotionPrevButton;
+	UPROPERTY(meta = (BindWidget)) UButton* UpperNextButton;
+	UPROPERTY(meta = (BindWidget)) UButton* UpperPrevButton;
+	UPROPERTY(meta = (BindWidget)) UButton* LowerNextButton;
+	UPROPERTY(meta = (BindWidget)) UButton* LowerPrevButton;
+	UPROPERTY(meta = (BindWidget)) UButton* ShoesNextButton;
+	UPROPERTY(meta = (BindWidget)) UButton* ShoesPrevButton;
+	UPROPERTY(meta = (BindWidget)) UButton* EnterButton;
+	UPROPERTY(meta = (BindWidget)) UButton* ExitButton;
+
+public:
+	UPROPERTY(meta = (BindWidget)) UEditableText* NameInputBox;
 };

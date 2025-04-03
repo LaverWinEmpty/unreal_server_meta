@@ -31,14 +31,17 @@ class META_API UDatabaseManager : public UManager {
 	GENERATED_BODY()
 
 public:
+	DECLARE_MANAGER_GET_INSTANCE(UDatabaseManager);
+
+public:
+	static constexpr int POOL_SIZE = 8; //!< connection pool size
+
+public:
 	using FConnection     = TSharedPtr<sql::Connection>;
 	using FConnectionPool = TQueue<FConnection>;
 
 public:
-	// void Initialize(FSubsystemCollectionBase&) override;
-
-public:
-	static constexpr int POOL_SIZE = 8; //!< connection pool size
+	void Initialize(FSubsystemCollectionBase&) override;
 
 public:
 	/**
@@ -53,12 +56,6 @@ public:
 		TFunction<void(sql::PreparedStatement*)> Prepare = nullptr,
 		TFunction<void(sql::ResultSet*)>         Process = nullptr
 	);
-
-public:
-	// get GameThread lambda
-	auto PostQuery(ENamedThreads::Type In = ENamedThreads::GameThread) {
-
-	}
 
 public:
 	TFuture<FConnection> GetConnection();
