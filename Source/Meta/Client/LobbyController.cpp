@@ -58,8 +58,6 @@ void ALobbyController::BeginPlay() {
 	LowerCount   = Manager->LowerAssets.Num();
 	ShoesCount   = Manager->ShoesAssets.Num();
 
-	Actor->Body->PlayAnimation(Manager->IdleAnimationAsset, true); // 애니메이션 재생
-
 	// 카메라 설정
 	Viewer = GetWorld()->SpawnActor<ACameraActor>(FVector{ 0, 200, 90 }, FRotator{ 0, -90, 0 });
 	SetViewTarget(Viewer);
@@ -139,6 +137,7 @@ void ALobbyController::OnCustomBegin() {
 	Actor->SetUpperMesh(GetSelectedUpperMesh());
 	Actor->SetLowerMesh(GetSelectedLowerMesh());
 	Actor->SetShoesMesh(GetSelectedShoesMesh());
+	Actor->Body->PlayAnimation(UPlayerMeshManager::Instance(this)->IdleAnimationAsset, true); // 애니메이션 재생
 }
 
 void ALobbyController::OnCustomEnd() {
