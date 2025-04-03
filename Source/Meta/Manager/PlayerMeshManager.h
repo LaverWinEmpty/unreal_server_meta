@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Manager/Manager.h"
+#include "Enum/PlayerMeshEnum.h"
 #include "PlayerMeshManager.generated.h"
 
 /**
@@ -13,19 +14,6 @@ UCLASS()
 class META_API UPlayerMeshManager : public UManager
 {
 	GENERATED_BODY()
-
-public:
-	// TODO: 이거로 refactor
-	// 다른 에셋 추가 안 할거면 그대로
-	enum EBodyPart {
-		EBP_Face,
-		EBP_Upper,
-		EBP_Lower,
-		EBP_Shoes,
-
-		//
-		EBP_Count
-	};
 	
 public:
 	DECLARE_MANAGER_GET_INSTANCE(UPlayerMeshManager);
@@ -34,12 +22,21 @@ public:
 	UPlayerMeshManager();
 
 public:
-	USkeletalMesh*         BodyAsset;
-	TArray<USkeletalMesh*> EmotionAssets;
-	TArray<USkeletalMesh*> UpperAssets;
-	TArray<USkeletalMesh*> LowerAssets;
-	TArray<USkeletalMesh*> ShoesAssets;
+	USkeletalMesh*   GetBodyMesh  (int EPB)                   const;
+	USkeletalMesh*   GetOutfitMesh(int EPB, int EPO, int Idx) const;
+	UAnimationAsset* GetAnimation (int EPB, int Idx)          const;
 
 public:
-	UAnimationAsset* IdleAnimationAsset;
+	const TArray<USkeletalMesh*>& GetFaceMeshs(int EPB) const;
+	const TArray<USkeletalMesh*>& GetUpperMeshs(int EPB) const;
+	const TArray<USkeletalMesh*>& GetLowerMeshs(int EPB) const;
+	const TArray<USkeletalMesh*>& GetShoesMeshs(int EPB) const;
+
+public:
+	struct FAsset {
+		USkeletalMesh*         Body;
+		TArray<USkeletalMesh*> Outfit[EPO_OutfitCount];
+		UAnimationAsset*       Anim[EPA_AnimCount];
+	};
+	FAsset Assets[EPB_BodyCount];
 };

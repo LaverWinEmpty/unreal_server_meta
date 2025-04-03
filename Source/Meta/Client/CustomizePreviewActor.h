@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
+#include "Enum/PlayerMeshEnum.h"
 #include "CustomizePreviewActor.generated.h"
 
 class USkeletalMeshComponent;
@@ -26,16 +27,11 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 public:
-	void SetBodyMesh();
-	void SetEmotionMesh(USkeletalMesh*);
-	void SetUpperMesh(USkeletalMesh*);
-	void SetLowerMesh(USkeletalMesh*);
-	void SetShoesMesh(USkeletalMesh*);
+	void SetBodyMesh(USkeletalMesh*);
+	void SetOutfitMesh(int EPO, USkeletalMesh*);
+	void PlayAnimation(UAnimationAsset*);
 
 public:
 	USkeletalMeshComponent* Body;
-	USkeletalMeshComponent* Emotion;
-	USkeletalMeshComponent* Upper;
-	USkeletalMeshComponent* Lower;
-	USkeletalMeshComponent* Shoes;
+	USkeletalMeshComponent* Outfit[EPO_OutfitCount];
 };

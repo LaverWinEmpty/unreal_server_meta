@@ -51,120 +51,105 @@ void ALobbyController::BeginPlay() {
 	// get
 	Actor = Cast<ACustomizePreviewActor>(GetPawn());
 
-	// 로드한 애셋 수 미리 가져옵니다.
-	UPlayerMeshManager* Manager = UPlayerMeshManager::Instance(this);
-	EmotionCount = Manager->EmotionAssets.Num();
-	UpperCount   = Manager->UpperAssets.Num();
-	LowerCount   = Manager->LowerAssets.Num();
-	ShoesCount   = Manager->ShoesAssets.Num();
-
 	// 카메라 설정
 	Viewer = GetWorld()->SpawnActor<ACameraActor>(FVector{ 0, 200, 90 }, FRotator{ 0, -90, 0 });
 	SetViewTarget(Viewer);
-}
 
-void ALobbyController::OnEmotionNext() {
-	++EmotionIndex;
-	if (EmotionIndex >= EmotionCount) {
-		EmotionIndex = 0;
+	// 에셋 개수 가져오기
+	auto Manager = UPlayerMeshManager::Instance(this);
+	for (int i = 0; i < EPB_BodyCount; ++i) {
+		for (int j = 0; j < EPO_OutfitCount; ++j) {
+			IndexMax[i][j] = Manager->Assets[i].Outfit[j].Num();
+		}
 	}
-	Actor->SetEmotionMesh(GetSelectedEmotionMesh());
 }
 
-void ALobbyController::OnEmotionPrev() {
-	--EmotionIndex;
-	if (EmotionIndex < 0) {
-		EmotionIndex = EmotionCount - 1;
+void ALobbyController::NextOuifit(int OutfitType) {
+	++Index[OutfitType];
+	if (Index[OutfitType] >= IndexMax[BodyType][OutfitType]) {
+		Index[OutfitType] = 0;
 	}
-	Actor->SetEmotionMesh(GetSelectedEmotionMesh());
+	Actor->SetOutfitMesh(OutfitType, GetSelectedOutfitMesh(OutfitType));
 }
 
-void ALobbyController::OnUpperNext() {
-	++UpperIndex;
-	if (UpperIndex >= UpperCount) {
-		UpperIndex = 0;
+void ALobbyController::PrevOutfit(int OutfitType) {
+	--Index[OutfitType];
+	if (Index[OutfitType] < 0) {
+		Index[OutfitType] = IndexMax[BodyType][OutfitType] - 1;
 	}
-	Actor->SetUpperMesh(GetSelectedUpperMesh());
-
+	Actor->SetOutfitMesh(OutfitType, GetSelectedOutfitMesh(OutfitType));
 }
 
-void ALobbyController::OnUpperPrev() {
-	--UpperIndex;
-	if (UpperIndex < 0) {
-		UpperIndex = UpperCount - 1;
+void ALobbyController::BodySelect(int In) {
+	BodyType = In;
+
+	// 의상 바디에 맞춰 초기화
+	for (int i = 0; i < EPO_OutfitCount; ++i) {
+		Index[i] = 0;
+		Actor->SetOutfitMesh(Index[i], GetSelectedOutfitMesh(Index[i]));
 	}
-	Actor->SetUpperMesh(GetSelectedUpperMesh());
+
+	// Idle 모션 재생
+	Actor->PlayAnimation(
+		UPlayerMeshManager::Instance(this)->Assets[BodyType].Anim[EPA_Idle]
+	);
 }
 
-void ALobbyController::OnLowerNext() {
-	++LowerIndex;
-	if (LowerIndex >= LowerCount) {
-		LowerIndex = 0;
+void ALobbyController::OnBodyNext() {
+	if (++BodyType >= EPB_BodyCount) {
+		BodyType = 0;
 	}
-	Actor->SetLowerMesh(GetSelectedLowerMesh());
+	BodySelect(BodyType);
 }
 
-void ALobbyController::OnLowerPrev() {
-	--LowerIndex;
-	if (LowerIndex < 0) {
-		LowerIndex = LowerCount - 1;
+void ALobbyController::OnBodyPrev() {
+	if (--BodyType < 0) {
+		BodyType = EPB_BodyCount - 1;
 	}
-	Actor->SetLowerMesh(GetSelectedLowerMesh());
+	BodySelect(BodyType);
 }
 
-void ALobbyController::OnShoesNext() {
-	++ShoesIndex;
-	if (ShoesIndex >= ShoesCount) {
-		ShoesIndex = 0;
-	}
-	Actor->SetShoesMesh(GetSelectedShoesMesh());
-}
-
-void ALobbyController::OnShoesPrev() {
-	--ShoesIndex;
-	if (ShoesIndex < 0) {
-		ShoesIndex = ShoesCount - 1;
-	}
-	Actor->SetShoesMesh(GetSelectedShoesMesh());
-}
+void ALobbyController::OnEmotionNext() { NextOuifit(EPO_Face); }
+void ALobbyController::OnEmotionPrev() { PrevOutfit(EPO_Face); }
+void ALobbyController::OnUpperNext() { NextOuifit(EPO_Upper); }
+void ALobbyController::OnUpperPrev() { PrevOutfit(EPO_Upper); }
+void ALobbyController::OnLowerNext() { NextOuifit(EPO_Lower); }
+void ALobbyController::OnLowerPrev() { PrevOutfit(EPO_Lower); }
+void ALobbyController::OnShoesNext() { NextOuifit(EPO_Shoes); }
+void ALobbyController::OnShoesPrev() { PrevOutfit(EPO_Shoes); }
 
 void ALobbyController::OnCustomBegin() {
 	CharacterCustomUI->SetVisibility(ESlateVisibility::Visible);
 	LobbyUI->SetVisibility(ESlateVisibility::Hidden);
 
-	Actor->SetBodyMesh();
-	Actor->SetEmotionMesh(GetSelectedEmotionMesh());
-	Actor->SetUpperMesh(GetSelectedUpperMesh());
-	Actor->SetLowerMesh(GetSelectedLowerMesh());
-	Actor->SetShoesMesh(GetSelectedShoesMesh());
-	Actor->Body->PlayAnimation(UPlayerMeshManager::Instance(this)->IdleAnimationAsset, true); // 애니메이션 재생
+	auto Manager = UPlayerMeshManager::Instance(this);
+
+	Actor->SetBodyMesh(Manager->GetBodyMesh(BodyType));
+	for (int i = 0; i < EPO_OutfitCount; ++i) {
+		Actor->SetOutfitMesh(Index[i], GetSelectedOutfitMesh(Index[i]));
+	}
+	Actor->PlayAnimation(Manager->Assets[BodyType].Anim[EPA_Idle]); // Idle 모션 재생
 }
 
 void ALobbyController::OnCustomEnd() {
 	LobbyUI->SetVisibility(ESlateVisibility::Visible);
 	CharacterCustomUI->SetVisibility(ESlateVisibility::Hidden);
+	BodySelect(0); // 기본값 로딩
 }
 
 void ALobbyController::OnCustomCancel() {
 	LobbyUI->SetVisibility(ESlateVisibility::Visible);
 	CharacterCustomUI->SetVisibility(ESlateVisibility::Hidden);
+
+	// TODO: 기존 거 로딩
 }
 
 void ALobbyController::OnLogOut() {
+	// TODO:
 }
 
-USkeletalMesh* ALobbyController::GetSelectedEmotionMesh() const {
-	return UPlayerMeshManager::Instance(this)->EmotionAssets[EmotionIndex];
-}
-
-USkeletalMesh* ALobbyController::GetSelectedUpperMesh() const {
-	return UPlayerMeshManager::Instance(this)->UpperAssets[UpperIndex];
-}
-
-USkeletalMesh* ALobbyController::GetSelectedLowerMesh() const {
-	return UPlayerMeshManager::Instance(this)->LowerAssets[LowerIndex];
-}
-
-USkeletalMesh* ALobbyController::GetSelectedShoesMesh() const {
-	return UPlayerMeshManager::Instance(this)->ShoesAssets[ShoesIndex];
+USkeletalMesh* ALobbyController::GetSelectedOutfitMesh(int OutfitIndex) const {
+	auto& Array = UPlayerMeshManager::Instance(this)->Assets[BodyType].Outfit[OutfitIndex];
+	check(Array.Num());
+	return Array[Index[OutfitIndex]];
 }

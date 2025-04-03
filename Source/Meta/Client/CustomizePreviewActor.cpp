@@ -12,32 +12,18 @@ ACustomizePreviewActor::ACustomizePreviewActor() {
 	PrimaryActorTick.bCanEverTick = true;
 
     // Set Component
-
-    Body    = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Body"));
-    Emotion = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Emotion"));
-    Upper   = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Upper"));
-    Lower   = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Lower"));
-    Shoes   = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Shoes"));
+    Body              = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Body"));
+    Outfit[EPO_Face]  = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Face"));
+    Outfit[EPO_Upper] = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Upper"));
+    Outfit[EPO_Lower] = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Lower"));
+    Outfit[EPO_Shoes] = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Shoes"));
     
-    // Set hierarchy
+    // Set hierarchy for same animation
     RootComponent = Body;
-    Emotion->SetupAttachment(Body);
-    Upper->SetupAttachment(Body);
-    Lower->SetupAttachment(Body);
-    Shoes->SetupAttachment(Body);
-
-    // 동일한 애니메이션
-    Emotion->SetLeaderPoseComponent(Body, true);
-    Upper->SetLeaderPoseComponent(Body, true);
-    Lower->SetLeaderPoseComponent(Body, true);
-    Shoes->SetLeaderPoseComponent(Body, true);
-
-    //static ConstructorHelpers::FClassFinder<UAnimInstance> AnimBP(TEXT("/Game/Character/AnimBP_Mannequin.AnimBP_Mannequin_C"));
-    //if (AnimBP.Succeeded())
-    //{
-    //    BodyMesh->SetAnimInstanceClass(AnimBP.Class);
-    //    // Outfit은 Body의 애니메이션을 따라가므로 따로 설정할 필요 없음
-    //}
+    for (int i = 0; i < EPO_OutfitCount; ++i) {
+        Outfit[i]->SetupAttachment(Body);
+        Outfit[i]->SetLeaderPoseComponent(Body, true);
+    }
 }
 
 void ACustomizePreviewActor::BeginPlay() {
@@ -49,26 +35,14 @@ void ACustomizePreviewActor::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
 }
 
-void ACustomizePreviewActor::SetBodyMesh() {
-    UPlayerMeshManager* Manager = UPlayerMeshManager::Instance(this);
-    if (Body->GetSkeletalMeshAsset() == nullptr) {
-        Body->SetSkeletalMesh(Manager->BodyAsset);
-    }
+void ACustomizePreviewActor::SetBodyMesh(USkeletalMesh* In) {
+    Body->SetSkeletalMesh(In);
 }
 
-void ACustomizePreviewActor::SetEmotionMesh(USkeletalMesh* In) {
-    Emotion->SetSkeletalMesh(In);
+void ACustomizePreviewActor::SetOutfitMesh(int Index, USkeletalMesh* In) {
+    Outfit[Index]->SetSkeletalMesh(In);
 }
 
-void ACustomizePreviewActor::SetUpperMesh(USkeletalMesh* In) {
-    Upper->SetSkeletalMesh(In);
+void ACustomizePreviewActor::PlayAnimation(UAnimationAsset* In) {
+    Body->PlayAnimation(In, true);
 }
-
-void ACustomizePreviewActor::SetLowerMesh(USkeletalMesh* In) {
-    Lower->SetSkeletalMesh(In);
-}
-
-void ACustomizePreviewActor::SetShoesMesh(USkeletalMesh* In) {
-    Shoes->SetSkeletalMesh(In);
-}
-

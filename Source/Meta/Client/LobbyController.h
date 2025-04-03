@@ -1,8 +1,7 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Enum/PlayerMeshEnum.h"
 #include "GameFramework/PlayerController.h"
 #include "LobbyController.generated.h"
 
@@ -22,6 +21,13 @@ public:
 	void BeginPlay() override;
 
 public:
+	void NextOuifit(int OutfitType);
+	void PrevOutfit(int OutfitType);
+	void BodySelect(int);
+
+public:
+	UFUNCTION() void OnBodyNext();
+	UFUNCTION() void OnBodyPrev();
 	UFUNCTION() void OnEmotionNext();
 	UFUNCTION() void OnEmotionPrev();
 	UFUNCTION() void OnUpperNext();
@@ -35,23 +41,19 @@ public:
 	UFUNCTION() void OnCustomCancel();
 	UFUNCTION() void OnLogOut();
 
-private:
-	int EmotionIndex = 0;
-	int UpperIndex   = 0;
-	int LowerIndex   = 0;
-	int ShoesIndex   = 0;
-
-private:
-	int EmotionCount = 0;
-	int UpperCount   = 0;
-	int LowerCount   = 0;
-	int ShoesCount   = 0;
-
 public:
-	USkeletalMesh* GetSelectedEmotionMesh() const;
-	USkeletalMesh* GetSelectedUpperMesh() const;
-	USkeletalMesh* GetSelectedLowerMesh() const;
-	USkeletalMesh* GetSelectedShoesMesh() const;
+	USkeletalMesh* GetSelectedOutfitMesh(int EOP) const;
+
+private:
+	int BodyType = 0;
+	int Index[EPO_OutfitCount];
+	int IndexMax[EPB_BodyCount][EPO_OutfitCount] = { 0 };
+
+//public:
+//	USkeletalMesh* GetSelectedEmotionMesh() const;
+//	USkeletalMesh* GetSelectedUpperMesh() const;
+//	USkeletalMesh* GetSelectedLowerMesh() const;
+//	USkeletalMesh* GetSelectedShoesMesh() const;
 
 private:
 	TSubclassOf<UUserWidget> LobbyUiWidgetClass;
