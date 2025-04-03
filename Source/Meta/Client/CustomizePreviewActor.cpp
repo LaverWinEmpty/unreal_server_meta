@@ -12,11 +12,10 @@ ACustomizePreviewActor::ACustomizePreviewActor() {
 	PrimaryActorTick.bCanEverTick = true;
 
     // Set Component
-    Body              = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Body"));
-    Outfit[EPO_Face]  = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Face"));
-    Outfit[EPO_Upper] = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Upper"));
-    Outfit[EPO_Lower] = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Lower"));
-    Outfit[EPO_Shoes] = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Shoes"));
+    Body = CreateDefaultSubobject<USkeletalMeshComponent>(_T("Body"));
+    for (int i = 0; i < EPO_OutfitCount; ++i) {
+        Outfit[i] = CreateDefaultSubobject<USkeletalMeshComponent>(*FString::Printf(_T("Outfit_%d"), i));
+    }
     
     // Set hierarchy for same animation
     RootComponent = Body;

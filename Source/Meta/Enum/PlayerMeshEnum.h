@@ -8,6 +8,7 @@ enum EPlayerBody {
 };
 
 enum EPlayerOutfit {
+    EPO_Hair,
     EPO_Face,
     EPO_Upper,
     EPO_Lower,

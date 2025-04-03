@@ -22,6 +22,11 @@ UPlayerMeshManager::UPlayerMeshManager() {
 	// mesh names
 	static const TArray<FString> MeshNames[EPB_BodyCount][EPO_OutfitCount] = {
 		/* Body Type 1 */ {
+			/* Hair */ {
+				_T("SK_Hairstyle_male_010.SK_Hairstyle_male_010"),
+				_T("SK_Hairstyle_male_012.SK_Hairstyle_male_012"),
+			},
+
 			/* Face */ {
 				_T("SK_Male_emotion_usual_001.SK_Male_emotion_usual_001"),
 				_T("SK_Male_emotion_happy_002.SK_Male_emotion_happy_002"),
@@ -31,11 +36,13 @@ UPlayerMeshManager::UPlayerMeshManager() {
 			/* Upper */ {
 				_T("SK_Outerwear_029.SK_Outerwear_029"),
 				_T("SK_Outerwear_036.SK_Outerwear_036"),
+				_T("SK_T_Shirt_009.SK_T_Shirt_009"),
 			},
 
 			/* Lower */ {
 				_T("SK_Pants_010.SK_Pants_010"),
 				_T("SK_Pants_014.SK_Pants_014"),
+				_T("SK_Shorts_003.SK_Shorts_003"),
 			},
 
 			/* Shoes */ {
