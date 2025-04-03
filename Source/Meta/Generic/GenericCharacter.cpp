@@ -29,7 +29,7 @@ void AGenericCharacter::BeginPlay() {
     PrimaryActorTick.bCanEverTick = true;
     bReplicates                   = true;
 
-    USkeletalMesh* TempMesh =  LoadObject<USkeletalMesh>(nullptr, TEXT("/Script/Engine.SkeletalMesh'/Engine/EngineMeshes/SkeletalCube.SkeletalCube'"));
+    USkeletalMesh* TempMesh = LoadObject<USkeletalMesh>(nullptr, TEXT("/Script/Engine.SkeletalMesh'/Engine/EngineMeshes/SkeletalCube.SkeletalCube'"));
     GetMesh()->SetSkeletalMesh(TempMesh);
 }
 

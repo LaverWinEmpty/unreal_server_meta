@@ -5,6 +5,7 @@
 #include "Client/CustomizePreviewActor.h"
 #include "Manager/PlayerMeshManager.h"
 #include "Camera/CameraActor.h"
+#include "Camera/CameraComponent.h"
 #include "UI/CharacterCustomizeUI.h"
 #include "UI/LobbyUI.h"
 #include "Components/Button.h"
@@ -54,6 +55,9 @@ void ALobbyController::BeginPlay() {
 	// 카메라 설정
 	Viewer = GetWorld()->SpawnActor<ACameraActor>(FVector{ 0, 200, 90 }, FRotator{ 0, -90, 0 });
 	SetViewTarget(Viewer);
+
+	Viewer->GetCameraComponent()->SetProjectionMode(ECameraProjectionMode::Orthographic);
+	Viewer->GetCameraComponent()->SetOrthoWidth(500.0f);
 
 	// 에셋 개수 가져오기
 	auto Manager = UPlayerMeshManager::Instance(this);
