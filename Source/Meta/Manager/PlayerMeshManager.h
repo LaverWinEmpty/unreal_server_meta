@@ -22,6 +22,10 @@ public:
 	UPlayerMeshManager();
 
 public:
+	void Initialize(FSubsystemCollectionBase& Collection) override;
+	void Setup();
+
+public:
 	USkeletalMesh*   GetBodyMesh  (int EPB)                   const;
 	USkeletalMesh*   GetOutfitMesh(int EPB, int EPO, int Idx) const;
 	UAnimationAsset* GetAnimation (int EPB, int Idx)          const;

@@ -47,10 +47,10 @@ void ALobbyController::BeginPlay() {
 
 	CharacterCustomUI->EnterButton->OnClicked.AddDynamic(this, &ALobbyController::OnCustomEnd);
 	CharacterCustomUI->ExitButton->OnClicked.AddDynamic(this, &ALobbyController::OnCustomCancel);
-	
+
 	LobbyUI = CreateWidget<ULobbyUI>(this, LobbyUiWidgetClass);
 	LobbyUI->AddToViewport();
-	
+
 	LobbyUI->LogOutButton->OnClicked.AddDynamic(this, &ALobbyController::OnLogOut);
 	LobbyUI->NewCharacterButton->OnClicked.AddDynamic(this, &ALobbyController::OnCustomBegin);
 
@@ -71,6 +71,20 @@ void ALobbyController::BeginPlay() {
 			OutfitSelectMax[i][j] = Manager->Assets[i].Outfit[j].Num();
 		}
 	}
+
+	// 캐릭터 정보 로딩하기
+	FString ID = UClientSessionManager::Instance(this)->GetPlayerID(this);
+	UDatabaseManager::Instance(this)->Query(
+		"SELECT * FROM player_tbl WHERE owner_id = ?",
+		[ID](sql::PreparedStatement* In) {
+			In->setString(1, TCHAR_TO_UTF8(*ID));
+		},
+		[](sql::ResultSet* In) {
+			while (In->next()) {
+				//In->
+			}
+		}
+	);
 }
 
 void ALobbyController::NextOuifit(int OutfitType) {
@@ -143,9 +157,6 @@ void ALobbyController::OnCustomBegin() {
 }
 
 void ALobbyController::OnCustomEnd() {
-	LobbyUI->SetVisibility(ESlateVisibility::Visible);
-	CharacterCustomUI->SetVisibility(ESlateVisibility::Hidden);
-
 	// Regist DB
 	FString Name = CharacterCustomUI->NameInputBox->GetText().ToString();
 	FString ID   = UClientSessionManager::Instance(this)->GetPlayerID(this);
@@ -159,16 +170,42 @@ void ALobbyController::OnCustomEnd() {
 	};
 
 	UDatabaseManager::Instance(this)->Query(
-		"INSERT INTO player_tbl VALUES(?, ?, ?, ?, ?, ?, ?, ?)",
-		[ID, Name, IndexList](sql::PreparedStatement* In) {
+		"SELECT * FROM player_tbl WHERE nickname = ? LIMIT 1", // search 1
+		[Name](sql::PreparedStatement* In) {
 			In->setString(1, TCHAR_TO_UTF8(*Name));
-			In->setString(2, TCHAR_TO_UTF8(*ID));
-			int Index = 3;
-			for (auto Param : IndexList) {
-				In->setInt(Index, Param);
-				++Index;
+		},
+		[this, ID, Name, IndexList](sql::ResultSet* In) {
+			if (In->next()) {
+			// duplicated
+				AsyncTask(ENamedThreads::GameThread,
+					[]() {
+						// TODO:
+						UE_LOG(LogTemp, Warning, _T("Duplciated Nickname"));
+					}
+				);
 			}
-		}
+			else {
+				UDatabaseManager::Instance(this)->Query(
+					"INSERT INTO player_tbl VALUES(?, ?, ?, ?, ?, ?, ?, ?)",
+					[ID, Name, IndexList](sql::PreparedStatement* In) {
+						In->setString(1, TCHAR_TO_UTF8(*Name));
+						In->setString(2, TCHAR_TO_UTF8(*ID));
+						int Index = 3;
+						for (auto Param : IndexList) {
+							In->setInt(Index, Param);
+							++Index;
+						}
+					}
+				); // end query
+
+				AsyncTask(ENamedThreads::GameThread,
+					[this]() {
+						LobbyUI->SetVisibility(ESlateVisibility::Visible);
+						CharacterCustomUI->SetVisibility(ESlateVisibility::Hidden);
+					} // end lambda
+				); // end AsyncTask
+			} // end else
+		} // end process
 	); // end query
 }
 

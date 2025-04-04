@@ -14,7 +14,6 @@ THIRD_PARTY_INCLUDES_END
 #include "openssl/sha.h"
 
 ALoginController::ALoginController() {
-    // duplicated 오류 수정해야됨
     static ConstructorHelpers::FClassFinder<UUserWidget> Finder(TEXT("/Game/Assets/UI/BP_LoginUI"));
     check(Finder.Class);
     LoginWidgetClass = Finder.Class;

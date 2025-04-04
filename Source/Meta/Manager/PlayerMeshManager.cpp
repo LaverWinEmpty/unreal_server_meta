@@ -3,7 +3,9 @@
 
 #include "Manager/PlayerMeshManager.h"
 
-UPlayerMeshManager::UPlayerMeshManager() {
+UPlayerMeshManager::UPlayerMeshManager() {}
+
+void UPlayerMeshManager::Setup() {
 	// nullptr allows list
 	static TSet<int> Nullable = {
 		EPO_Hair,
@@ -26,7 +28,6 @@ UPlayerMeshManager::UPlayerMeshManager() {
 			_T("ANIM_Idle_Breathing.ANIM_Idle_Breathing"),
 		}
 	};
-
 
 	// mesh names
 	static const TArray<FString> MeshNames[EPB_BodyCount][EPO_OutfitCount] = {
@@ -62,39 +63,39 @@ UPlayerMeshManager::UPlayerMeshManager() {
 		}
 	};
 
-	static TArray<ConstructorHelpers::FObjectFinder<USkeletalMesh>>   BodyFinder;
-	static TArray<ConstructorHelpers::FObjectFinder<USkeletalMesh>>   MeshFinder[EPB_BodyCount][EPO_OutfitCount];
-	static TArray<ConstructorHelpers::FObjectFinder<UAnimationAsset>> AnimFinder[EPB_BodyCount];
+	auto LoadBodyMesh = [](int i) {
+		return Cast<USkeletalMesh>(
+			StaticLoadObject(
+				USkeletalMesh::StaticClass(),
+				nullptr,
+				*(MeshesPath + BodyNames[i])
+			)
+		);
+	};
 
-	static bool bLoaded= false;
-	if (!bLoaded) {
-		bLoaded = true;
+	auto LoadOutfitMesh = [](int i, int j, int k) {
+		return Cast<USkeletalMesh>(
+			StaticLoadObject(
+				USkeletalMesh::StaticClass(),
+				nullptr,
+				*(MeshesPath + MeshNames[i][j][k])
+			)
+		);
+	};
 
-		for (int i = 0; i < EPB_BodyCount; ++i) {
-			BodyFinder.Add(*(MeshesPath + BodyNames[i]));
-		}
-
-		for (int i = 0; i < EPB_BodyCount; ++i) {
-			// find mesh object
-			for (int j = 0; j < EPO_OutfitCount; ++j) {
-				int Loop = MeshNames[i][j].Num(); // get num of outfit parts
-				for (int k = 0; k < Loop; ++k) {
-					MeshFinder[i][j].Add(*(MeshesPath + MeshNames[i][j][k])); // find
-				}
-			}
-
-			// find anim object
-			AnimFinder[i].Reserve(EPA_AnimCount);
-			for (int j = 0; j < EPA_AnimCount; ++j) {
-				AnimFinder[i].Add(*(AnimsPath + AnimNames[i][j])); // find
-			}
-		}
-	}
-
+	auto LoadAnimation = [](int i, int j) {
+		return Cast<UAnimationAsset>(
+			StaticLoadObject(
+				UAnimationAsset::StaticClass(),
+				nullptr,
+				*(AnimsPath + AnimNames[i][j])
+			)
+		);
+	};
 
 	// get assets
 	for (int i = 0; i < EPB_BodyCount; ++i) {
-		Assets[i].Body = BodyFinder[i].Object;
+		Assets[i].Body = LoadBodyMesh(i);
 
 		// get mesh object
 		for (int j = 0; j < EPO_OutfitCount; ++j) {
@@ -103,15 +104,15 @@ UPlayerMeshManager::UPlayerMeshManager() {
 			}
 
 			// load
-			int Loop = MeshFinder[i][j].Num();
+			int Loop = MeshNames[i][j].Num();
 			for (int k = 0; k < Loop; ++k) {
-				Assets[i].Outfit[j].Add(MeshFinder[i][j][k].Object); // get
+				Assets[i].Outfit[j].Add(LoadOutfitMesh(i, j, k)); // get
 			}
 		}
 
 		// load anim object
 		for (int j = 0; j < EPA_AnimCount; ++j) {
-			Assets[i].Anim[j] = AnimFinder[i][j].Object; // get
+			Assets[i].Anim[j] = LoadAnimation(i, j); // get
 		}
 	}
 
@@ -121,7 +122,7 @@ UPlayerMeshManager::UPlayerMeshManager() {
 
 		for (int j = 0; j < EPO_OutfitCount; ++j) {
 			if (!Nullable.Find(j)) {
-				checkf(MeshFinder[i][j].Num(), _T("At least 1 asset is required.: Body[%d] Outfit[%d]"), i, j);
+				checkf(MeshNames[i][j].Num(), _T("At least 1 asset is required.: Body[%d] Outfit[%d]"), i, j);
 			}
 		}
 
@@ -141,6 +142,11 @@ UPlayerMeshManager::UPlayerMeshManager() {
 			checkf(Assets[i].Anim[j], _T("Load Failed: Body[%d] Animation[%d]"), i, j);
 		}
 	}
+}
+
+void UPlayerMeshManager::Initialize(FSubsystemCollectionBase& Collection) {
+	Super::Initialize(Collection);
+	Setup();
 }
 
 USkeletalMesh* UPlayerMeshManager::GetBodyMesh(int Type) const {

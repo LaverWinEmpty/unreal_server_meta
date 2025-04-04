@@ -7,6 +7,8 @@
 #include "LobbyUI.generated.h"
 
 class UButton;
+class UTextBlock;
+class UListView;
 
 UCLASS()
 class META_API ULobbyUI : public UUserWidget
@@ -20,6 +22,12 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	UButton* NewCharacterButton;
 
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* PlayerNameText;
+
+	UPROPERTY(meta = (BindWidget))
+	UListView* PlayerCharacterList;
+
 	//UPROPERTY(meta = (BindWidget))
 	//UButton* CreateRoomButton;
 
@@ -28,5 +36,4 @@ public:
 
 	//UPROPERTY(meta = (BindWidget))
 	//UListView* Rooms;
-
 };
