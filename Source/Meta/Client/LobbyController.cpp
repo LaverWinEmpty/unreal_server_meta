@@ -93,7 +93,7 @@ void ALobbyController::BodySelect(int In) {
 	// 의상 바디에 맞춰 초기화
 	for (int i = 0; i < EPO_OutfitCount; ++i) {
 		OutfitSelected[i] = 0;
-		Actor->SetOutfitMesh(OutfitSelected[i], GetSelectedOutfitMesh(OutfitSelected[i]));
+		Actor->SetOutfitMesh(i, GetSelectedOutfitMesh(i));
 	}
 
 	// Idle 모션 재생
@@ -160,7 +160,5 @@ USkeletalMesh* ALobbyController::GetSelectedBodyMesh() const {
 USkeletalMesh* ALobbyController::GetSelectedOutfitMesh(int OutfitType) const {
 	const auto& Arr = UPlayerMeshManager::Instance(this)->Assets[BodyType].Outfit[OutfitType];
 	int         Idx = OutfitSelected[OutfitType];
-	
-	check(!Arr[Idx]);
 	return Arr[Idx];
 }

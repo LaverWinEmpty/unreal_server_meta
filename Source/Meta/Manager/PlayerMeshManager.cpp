@@ -98,9 +98,8 @@ UPlayerMeshManager::UPlayerMeshManager() {
 
 		// get mesh object
 		for (int j = 0; j < EPO_OutfitCount; ++j) {
-			// outfit[Slot][0] == nullptr (nullable)
 			if (Nullable.Find(j)) {
-				Assets[i].Outfit[j].Add(nullptr);
+				Assets[i].Outfit[j].Add(nullptr); // nullable
 			}
 
 			// load
@@ -118,13 +117,13 @@ UPlayerMeshManager::UPlayerMeshManager() {
 
 	// check
 	for (int i = 0; i < EPB_BodyCount; ++i) {
+		checkf(Assets[i].Body, _T("Load Failed: Body[%d]"), i);
+
 		for (int j = 0; j < EPO_OutfitCount; ++j) {
 			if (!Nullable.Find(j)) {
 				checkf(MeshFinder[i][j].Num(), _T("At least 1 asset is required.: Body[%d] Outfit[%d]"), i, j);
 			}
 		}
-
-		checkf(Assets[i].Body, _T("Load Failed: Body[%d]"), i);
 
 		for (int j = 0; j < EPO_OutfitCount; ++j) {
 			int loop = Assets[i].Outfit[j].Num();
