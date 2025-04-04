@@ -42,18 +42,13 @@ public:
 	UFUNCTION() void OnLogOut();
 
 public:
-	USkeletalMesh* GetSelectedOutfitMesh(int EOP) const;
+	USkeletalMesh* GetSelectedBodyMesh() const;
+	USkeletalMesh* GetSelectedOutfitMesh(int EPO) const;
 
 private:
 	int BodyType = 0;
-	int Index[EPO_OutfitCount];
-	int IndexMax[EPB_BodyCount][EPO_OutfitCount] = { 0 };
-
-//public:
-//	USkeletalMesh* GetSelectedEmotionMesh() const;
-//	USkeletalMesh* GetSelectedUpperMesh() const;
-//	USkeletalMesh* GetSelectedLowerMesh() const;
-//	USkeletalMesh* GetSelectedShoesMesh() const;
+	int OutfitSelected[EPO_OutfitCount]; // selected outfit index
+	int OutfitSelectMax[EPB_BodyCount][EPO_OutfitCount] = { 0 };
 
 private:
 	TSubclassOf<UUserWidget> LobbyUiWidgetClass;

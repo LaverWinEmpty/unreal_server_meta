@@ -4,6 +4,14 @@
 #include "Manager/PlayerMeshManager.h"
 
 UPlayerMeshManager::UPlayerMeshManager() {
+	// nullptr allows list
+	static TSet<int> Nullable = {
+		EPO_Hair,
+		EPO_Upper,
+		EPO_Lower,
+		EPO_Shoes,
+	};
+
 	static const FString AnimsPath  = _T("/Game/Creative_Characters_FREE/Animations/");
 	static const FString MeshesPath = _T("/Game/Creative_Characters_FREE/Skeleton_Meshes/");
 
@@ -18,6 +26,7 @@ UPlayerMeshManager::UPlayerMeshManager() {
 			_T("ANIM_Idle_Breathing.ANIM_Idle_Breathing"),
 		}
 	};
+
 
 	// mesh names
 	static const TArray<FString> MeshNames[EPB_BodyCount][EPO_OutfitCount] = {
@@ -80,21 +89,28 @@ UPlayerMeshManager::UPlayerMeshManager() {
 				AnimFinder[i].Add(*(AnimsPath + AnimNames[i][j])); // find
 			}
 		}
-
 	}
 
+
+	// get assets
 	for (int i = 0; i < EPB_BodyCount; ++i) {
 		Assets[i].Body = BodyFinder[i].Object;
 
 		// get mesh object
 		for (int j = 0; j < EPO_OutfitCount; ++j) {
+			// outfit[Slot][0] == nullptr (nullable)
+			if (Nullable.Find(j)) {
+				Assets[i].Outfit[j].Add(nullptr);
+			}
+
+			// load
 			int loop = MeshFinder[i][j].Num();
 			for (int k = 0; k < loop; ++k) {
 				Assets[i].Outfit[j].Add(MeshFinder[i][j][k].Object); // get
 			}
 		}
 
-		// get anim object
+		// load anim object
 		for (int j = 0; j < EPA_AnimCount; ++j) {
 			Assets[i].Anim[j] = AnimFinder[i][j].Object; // get
 		}
@@ -103,14 +119,21 @@ UPlayerMeshManager::UPlayerMeshManager() {
 	// check
 	for (int i = 0; i < EPB_BodyCount; ++i) {
 		for (int j = 0; j < EPO_OutfitCount; ++j) {
-			checkf(MeshFinder[i][j].Num(), _T("At least 1 asset is required.: Body[%d] Outfit[%d]"), i, j);
+			if (!Nullable.Find(j)) {
+				checkf(MeshFinder[i][j].Num(), _T("At least 1 asset is required.: Body[%d] Outfit[%d]"), i, j);
+			}
 		}
 
 		checkf(Assets[i].Body, _T("Load Failed: Body[%d]"), i);
 
 		for (int j = 0; j < EPO_OutfitCount; ++j) {
 			int loop = Assets[i].Outfit[j].Num();
-			for (int k = 0; k < loop; ++k) {
+			// [0] check nullable
+			if (Assets[i].Outfit[j][0] == nullptr && !Nullable.Find(j)) {
+				checkf(false, _T("Load Failed: Check Nullable -> Body[%d] Outfit[%d] Number[0]"), i, j);
+			}
+			// others
+			for (int k = 1; k < loop; ++k) {
 				checkf(Assets[i].Outfit[j][k], _T("Load Failed: Body[%d] Outfit[%d] Number[%d]"), i, j, k);
 			}
 		}

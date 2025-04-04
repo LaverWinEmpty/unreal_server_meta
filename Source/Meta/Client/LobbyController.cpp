@@ -63,23 +63,23 @@ void ALobbyController::BeginPlay() {
 	auto Manager = UPlayerMeshManager::Instance(this);
 	for (int i = 0; i < EPB_BodyCount; ++i) {
 		for (int j = 0; j < EPO_OutfitCount; ++j) {
-			IndexMax[i][j] = Manager->Assets[i].Outfit[j].Num();
+			OutfitSelectMax[i][j] = Manager->Assets[i].Outfit[j].Num();
 		}
 	}
 }
 
 void ALobbyController::NextOuifit(int OutfitType) {
-	++Index[OutfitType];
-	if (Index[OutfitType] >= IndexMax[BodyType][OutfitType]) {
-		Index[OutfitType] = 0;
+	++OutfitSelected[OutfitType];
+	if (OutfitSelected[OutfitType] >= OutfitSelectMax[BodyType][OutfitType]) {
+		OutfitSelected[OutfitType] = 0;
 	}
 	Actor->SetOutfitMesh(OutfitType, GetSelectedOutfitMesh(OutfitType));
 }
 
 void ALobbyController::PrevOutfit(int OutfitType) {
-	--Index[OutfitType];
-	if (Index[OutfitType] < 0) {
-		Index[OutfitType] = IndexMax[BodyType][OutfitType] - 1;
+	--OutfitSelected[OutfitType];
+	if (OutfitSelected[OutfitType] < 0) {
+		OutfitSelected[OutfitType] = OutfitSelectMax[BodyType][OutfitType] - 1;
 	}
 	Actor->SetOutfitMesh(OutfitType, GetSelectedOutfitMesh(OutfitType));
 }
@@ -87,10 +87,13 @@ void ALobbyController::PrevOutfit(int OutfitType) {
 void ALobbyController::BodySelect(int In) {
 	BodyType = In;
 
+	// 바디 메시 로드
+	Actor->SetBodyMesh(GetSelectedBodyMesh());
+
 	// 의상 바디에 맞춰 초기화
 	for (int i = 0; i < EPO_OutfitCount; ++i) {
-		Index[i] = 0;
-		Actor->SetOutfitMesh(Index[i], GetSelectedOutfitMesh(Index[i]));
+		OutfitSelected[i] = 0;
+		Actor->SetOutfitMesh(OutfitSelected[i], GetSelectedOutfitMesh(OutfitSelected[i]));
 	}
 
 	// Idle 모션 재생
@@ -128,17 +131,15 @@ void ALobbyController::OnCustomBegin() {
 
 	auto Manager = UPlayerMeshManager::Instance(this);
 
-	Actor->SetBodyMesh(Manager->GetBodyMesh(BodyType));
-	for (int i = 0; i < EPO_OutfitCount; ++i) {
-		Actor->SetOutfitMesh(Index[i], GetSelectedOutfitMesh(Index[i]));
-	}
-	Actor->PlayAnimation(Manager->Assets[BodyType].Anim[EPA_Idle]); // Idle 모션 재생
+	// get default body and set
+	BodySelect(0);
 }
 
 void ALobbyController::OnCustomEnd() {
 	LobbyUI->SetVisibility(ESlateVisibility::Visible);
 	CharacterCustomUI->SetVisibility(ESlateVisibility::Hidden);
-	BodySelect(0); // 기본값 로딩
+
+	// Get
 }
 
 void ALobbyController::OnCustomCancel() {
@@ -152,8 +153,14 @@ void ALobbyController::OnLogOut() {
 	// TODO:
 }
 
-USkeletalMesh* ALobbyController::GetSelectedOutfitMesh(int OutfitIndex) const {
-	auto& Array = UPlayerMeshManager::Instance(this)->Assets[BodyType].Outfit[OutfitIndex];
-	check(Array.Num());
-	return Array[Index[OutfitIndex]];
+USkeletalMesh* ALobbyController::GetSelectedBodyMesh() const {
+	return UPlayerMeshManager::Instance(this)->Assets[BodyType].Body;
+}
+
+USkeletalMesh* ALobbyController::GetSelectedOutfitMesh(int OutfitType) const {
+	const auto& Arr = UPlayerMeshManager::Instance(this)->Assets[BodyType].Outfit[OutfitType];
+	int         Idx = OutfitSelected[OutfitType];
+	
+	check(!Arr[Idx]);
+	return Arr[Idx];
 }
