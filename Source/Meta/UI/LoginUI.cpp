@@ -10,17 +10,3 @@
 void ULoginUI::NativeConstruct() {
 	InputPW->SetIsPassword(true);
 }
-
-// to server
-void ULoginUI::OnLoginButtonClicked_Implementation(const FString& ID, const FString& PW) {
-	UAccountManager::Instance(this)->Authenticate(EAA_LogIn, ID, PW);
-}
-
-// from server
-void ULoginUI::OnLoginFailed_Implementation(const FString& Result) {
-	
-}
-
-// from server
-void ULoginUI::OnLoginSucceded_Implementation() {
-}

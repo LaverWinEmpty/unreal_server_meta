@@ -1,5 +1,7 @@
 #pragma once
 
+#include "CoreMinimal.h"
+
 enum EPlayerBody {
     EPB_Male, // 남캐만 지원
 

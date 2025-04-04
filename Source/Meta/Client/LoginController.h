@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Enum/AuthEnum.h"
 #include "GameFramework/PlayerController.h"
 #include "LoginController.generated.h"
 
@@ -25,12 +26,49 @@ public:
 public:
     UFUNCTION() void OnLogIn();           // Login UI button
     UFUNCTION() void OnSignUp();          // Login UI button
-    UFUNCTION() void OnCreateCharacter(); // Lobby UI button
-    UFUNCTION() void OnCreateRoom();      // Lobby UI button
-    UFUNCTION() void OnEnterRoom();       // Lobby UI button
+
+public:
+    //! @brief 코드를 문자열로 변환합니다
+    static FString ConvertActionTypeName(int8);
+
+    //! @brief 코드를 문자열로 변환합니다
+    static FString ConvertActionTypeName(EAuthAction);
+
+public:
+    //! @brief 결과값 메세지로 가지고 옵니다
+    static FString GetResultMessage(int8);
+
+    //! @brief 결과값 메세지로 가지고 옵니다
+    static FString GetResultMessage(EAuthResult);
+
+public:
+    void Authenticate(EAuthAction In, const FString& ID, const FString& PW); // call by client -> process by server
+protected:
+    UFUNCTION(Server, Reliable)
+    void AuthenticateRequest(int8 Type, const FString& ID, const FString& PW); // client request
+protected:
+    void AuthenticateRequest_Implementation(int8 Type, const FString& ID, const FString& PW);
+protected:
+    UFUNCTION(Client, Reliable)
+    void AuthenticateResponse(int8 Type, int8 Result); // server response
+protected:
+    void AuthenticateResponse_Implementation(int8 Type, int8 Result);
+
+protected:
+    void LogIn(const FString& ID, const FString& PW); //!< 로그인
+    void LogOut(const FString& ID, const FString& PW); //!< 로그아웃
+    void SignUp(const FString& ID, const FString& PW); //!< 가입
+    void SignOut(const FString& ID, const FString& PW); //!< 탈퇴
+
+private:
+    void PostAuthenticate(const FString& ID, int8 Type, int8 Result);
 
 public:
     void OnAuthenticate(int8, int8);
+    
+private:
+    FString PasswordSHA256(const FString&);
+    FString GetSalted(const FString&);
 
 private:
     TSubclassOf<UUserWidget> LoginWidgetClass;
