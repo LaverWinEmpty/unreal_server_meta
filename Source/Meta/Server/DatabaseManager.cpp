@@ -39,28 +39,25 @@ void UDatabaseManager::Setup(
     //    return;
     //}
 
+    auto CheckTableExists = [](sql::ResultSet* In, const FString& TableName) {
+        if (In->next()) {
+            ensureMsgf(In->getInt(1) > 0, TEXT("Table '%s' does not exist!"), *TableName);
+        }
+    };
 
     // 테이블 검사
     Query("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'db' AND table_name = 'user_tbl'",
         nullptr,
-        [](sql::ResultSet* In) {
-            if (In->next()) {
-                if (In->getInt(1) <= 0) {
-                    check(false);
-                }
-            }
+        [CheckTableExists](sql::ResultSet* In) {
+            CheckTableExists(In, "user_tbl");
         }
     );
 
     // 테이블 검사
     Query("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'db' AND table_name = 'player_tbl'",
         nullptr,
-        [](sql::ResultSet* In) {
-            if (In->next()) {
-                if (In->getInt(1) <= 0) {
-                    check(false);
-                }
-            }
+        [CheckTableExists](sql::ResultSet* In) {
+            CheckTableExists(In, "player_tbl");
         }
     );
 }
@@ -114,49 +111,42 @@ void UDatabaseManager::OnQuery(
     sql::Connection& Connection,
     const sql::SQLString& Query,
     TFunction<void(sql::PreparedStatement*)> Prepare,
-    TFunction<void(sql::ResultSet*)> Process)
-{
+    TFunction<void(sql::ResultSet*)> Process
+) {
     UE_LOG(LogTemp, Log, _T("Acquired a MySQL Connection"));
 
-    // INSERT, UPDATE, etc...
-    if (Prepare == nullptr) {
-        if (Process != nullptr) {
-            UE_LOG(LogTemp, Warning, _T("Set Post Process On DML"));
-        }
-        
-        sql::Statement* Statement = Connection.createStatement();
-        Statement->execute(Query); // C++ std except
-        delete Statement;
+    sql::PreparedStatement* Statement = nullptr;
+    sql::ResultSet*         ResultSet = nullptr;
+
+    // set query parameter
+    Statement = Connection.prepareStatement(Query);
+    if (!Statement) {
+        UE_LOG(LogTemp, Error, TEXT("Query PreparedStatement Create Failed"));
+        check(false);
+        return;
     }
 
-    else {
-        sql::PreparedStatement* Statement = nullptr;
-        sql::ResultSet*         ResultSet = nullptr;
-        // set query parameter
-        Statement = Connection.prepareStatement(Query);
-        if (!Statement) {
-            UE_LOG(LogTemp, Error, TEXT("Query PreparedStatement Create Failed"));
-            check(false);
-            return;
-        }
-        Prepare(Statement); // C++ std except
-
-        // get result and process
-        ResultSet = Statement->executeQuery();
-        if (!ResultSet) {
-            UE_LOG(LogTemp, Error, TEXT("Query ResultSet Create Failed"));
-            check(false);
-            return;
-        }
-
-        // else ignore
-        if (Process) {
-            Process(ResultSet); // C++ std except
-        }
-
-        // release
-        delete ResultSet;
-        delete Statement;
+    // else ignore
+    if (Prepare) {
+        Prepare(Statement); // throw: C++ std except
     }
+
+    // get result and process
+    ResultSet = Statement->executeQuery();
+    if (!ResultSet) {
+        UE_LOG(LogTemp, Error, TEXT("Query ResultSet Create Failed"));
+        check(false);
+        return;
+    }
+
+    // else ignore
+    if (Process) {
+        Process(ResultSet); // throw: C++ std except
+    }
+
+    // release
+    delete ResultSet;
+    delete Statement;
+
     UE_LOG(LogTemp, Log, TEXT("Query executed successfully."));
 }
