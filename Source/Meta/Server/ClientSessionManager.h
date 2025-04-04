@@ -16,8 +16,8 @@ public:
 	bool IsExist(const FString&);
 
 public:
-	TWeakObjectPtr<UNetConnection> GetPlayerSocket(FString& ID);
-	FStringView                    GetPlayerID(APlayerController*);
+	TWeakObjectPtr<UNetConnection> GetPlayerSocket(const FString& ID);
+	FString                        GetPlayerID(APlayerController*);
 
 public:
 	void OnLogIn(const APlayerController*, const FString&);
@@ -26,5 +26,5 @@ public:
 
 private:
 	TMap<FString, TWeakObjectPtr<UNetConnection>> ClientSession;
-	TMap<TWeakObjectPtr<UNetConnection>, FStringView> ClientReference;
+	TMap<TWeakObjectPtr<UNetConnection>, FString> ClientReference;
 };

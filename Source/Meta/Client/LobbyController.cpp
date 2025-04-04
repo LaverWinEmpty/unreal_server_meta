@@ -4,11 +4,14 @@
 #include "Client/LobbyController.h"
 #include "Client/CustomizePreviewActor.h"
 #include "Manager/PlayerMeshManager.h"
+#include "Server/DatabaseManager.h"
+#include "Server/ClientSessionManager.h"
 #include "Camera/CameraActor.h"
 #include "Camera/CameraComponent.h"
 #include "UI/CharacterCustomizeUI.h"
 #include "UI/LobbyUI.h"
 #include "Components/Button.h"
+#include "Components/EditableText.h"
 
 ALobbyController::ALobbyController() {
 	// Lobby UI
@@ -143,7 +146,30 @@ void ALobbyController::OnCustomEnd() {
 	LobbyUI->SetVisibility(ESlateVisibility::Visible);
 	CharacterCustomUI->SetVisibility(ESlateVisibility::Hidden);
 
-	// Get
+	// Regist DB
+	FString Name = CharacterCustomUI->NameInputBox->GetText().ToString();
+	FString ID   = UClientSessionManager::Instance(this)->GetPlayerID(this);
+	TArray<int> IndexList = {
+		BodyType,
+		OutfitSelected[EPO_Face],
+		OutfitSelected[EPO_Hair],
+		OutfitSelected[EPO_Upper],
+		OutfitSelected[EPO_Lower],
+		OutfitSelected[EPO_Shoes],
+	};
+
+	UDatabaseManager::Instance(this)->Query(
+		"INSERT INTO player_tbl VALUES(?, ?, ?, ?, ?, ?, ?, ?)",
+		[ID, Name, IndexList](sql::PreparedStatement* In) {
+			In->setString(1, TCHAR_TO_UTF8(*Name));
+			In->setString(2, TCHAR_TO_UTF8(*ID));
+			int Index = 3;
+			for (auto Param : IndexList) {
+				In->setInt(Index, Param);
+				++Index;
+			}
+		}
+	); // end query
 }
 
 void ALobbyController::OnCustomCancel() {

@@ -77,8 +77,8 @@ UPlayerMeshManager::UPlayerMeshManager() {
 		for (int i = 0; i < EPB_BodyCount; ++i) {
 			// find mesh object
 			for (int j = 0; j < EPO_OutfitCount; ++j) {
-				int loop = MeshNames[i][j].Num(); // get num of outfit parts
-				for (int k = 0; k < loop; ++k) {
+				int Loop = MeshNames[i][j].Num(); // get num of outfit parts
+				for (int k = 0; k < Loop; ++k) {
 					MeshFinder[i][j].Add(*(MeshesPath + MeshNames[i][j][k])); // find
 				}
 			}
@@ -103,8 +103,8 @@ UPlayerMeshManager::UPlayerMeshManager() {
 			}
 
 			// load
-			int loop = MeshFinder[i][j].Num();
-			for (int k = 0; k < loop; ++k) {
+			int Loop = MeshFinder[i][j].Num();
+			for (int k = 0; k < Loop; ++k) {
 				Assets[i].Outfit[j].Add(MeshFinder[i][j][k].Object); // get
 			}
 		}
@@ -126,13 +126,13 @@ UPlayerMeshManager::UPlayerMeshManager() {
 		}
 
 		for (int j = 0; j < EPO_OutfitCount; ++j) {
-			int loop = Assets[i].Outfit[j].Num();
+			int Loop = Assets[i].Outfit[j].Num();
 			// [0] check nullable
 			if (Assets[i].Outfit[j][0] == nullptr && !Nullable.Find(j)) {
 				checkf(false, _T("Load Failed: Check Nullable -> Body[%d] Outfit[%d] Number[0]"), i, j);
 			}
 			// others
-			for (int k = 1; k < loop; ++k) {
+			for (int k = 1; k < Loop; ++k) {
 				checkf(Assets[i].Outfit[j][k], _T("Load Failed: Body[%d] Outfit[%d] Number[%d]"), i, j, k);
 			}
 		}

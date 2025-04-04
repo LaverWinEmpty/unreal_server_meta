@@ -13,37 +13,6 @@ THIRD_PARTY_INCLUDES_END
 #undef UI
 #include "openssl/sha.h"
 
-FString ALoginController::ConvertActionTypeName(EAuthAction In) {
-    switch (In) {
-    case EAA_LogIn:   return _T("Log-in");
-    case EAA_LogOut:  return _T("Log-out");
-    case EAA_SignUp:  return _T("Sign-in");
-    case EAA_SignOut: return _T("Sign-out");
-    };
-    checkNoEntry();
-    return "";
-}
-
-FString ALoginController::GetResultMessage(EAuthResult In) {
-    switch (In) {
-    case EAR_Uknown:       return _T("Unknown Error");
-    case EAR_Suceeded:     return _T("작업 완료");
-    case EAR_AlreadyExist: return _T("이미 존재하는 계정입니다");
-    case EAR_NotExist:     return _T("존재하지 않는 계정입니다");
-    }
-    checkNoEntry();
-    return "";
-}
-
-FString ALoginController::ConvertActionTypeName(int8 In) {
-    return ConvertActionTypeName(static_cast<EAuthAction>(In));
-}
-
-FString ALoginController::GetResultMessage(int8 In) {
-    return GetResultMessage(static_cast<EAuthResult>(In));
-}
-
-
 ALoginController::ALoginController() {
     // duplicated 오류 수정해야됨
     static ConstructorHelpers::FClassFinder<UUserWidget> Finder(TEXT("/Game/Assets/UI/BP_LoginUI"));
@@ -169,9 +138,9 @@ void ALoginController::LogIn(const FString& ID, const FString& PW) {
             In->setString(2, TCHAR_TO_UTF8(*HashedPW));
         },
         [this, ID](sql::ResultSet* In) {
-            EAuthResult Result = EAR_NotExist;
+            EResultCode Result = ERC_AlreadyExistID;
             if (In->next()) {
-                Result = EAR_Suceeded;
+                Result = ERC_Succeeded;
             }
             // GameThread에서 이어서 처리
             // 싱글턴이니까 안전할 거라 믿고 this call
@@ -190,7 +159,7 @@ void ALoginController::LogOut(const FString& ID, const FString& PW) {
 void ALoginController::SignUp(const FString& ID, const FString& PW) {
     FString HashedPW = PasswordSHA256(PW);
 
-    EAuthResult Result = EAR_Uknown;
+    EResultCode Result = ERC_Uknown;
 
     // Check account
     UDatabaseManager::Instance(this)->Query(
@@ -204,7 +173,7 @@ void ALoginController::SignUp(const FString& ID, const FString& PW) {
             if (In->next()) {
                 AsyncTask(ENamedThreads::GameThread,
                     [this, ID]() {
-                        PostAuthenticate(ID, EAA_SignUp, EAR_AlreadyExist); // server to client
+                        PostAuthenticate(ID, EAA_SignUp, ERC_AlreadyExistID); // server to client
                     }
                 );
             }
@@ -221,7 +190,7 @@ void ALoginController::SignUp(const FString& ID, const FString& PW) {
                         // 싱글턴이니까 life cycle 안전할 거라 믿고 this call
                         AsyncTask(ENamedThreads::GameThread,
                             [this, ID]() {
-                                PostAuthenticate(ID, EAA_SignUp, EAR_Suceeded); // server to client
+                                PostAuthenticate(ID, EAA_SignUp, ERC_Succeeded); // server to client
                             } // end labda
                         ); // and AysncTasck
                     } // end lambda
@@ -242,7 +211,7 @@ void ALoginController::PostAuthenticate(const FString& ID, int8 Type, int8 Resul
 
     // TODO: 이 함수 진입 시점에서 스레드 안전한지 검사 필요함
 
-    if (Result == EAR_Suceeded) {
+    if (Result == ERC_Succeeded) {
         // 서버에서 send 전에 미리 처리할 작업을 여기서 진행합니다.
         switch (Type) {
         case EAA_LogIn:

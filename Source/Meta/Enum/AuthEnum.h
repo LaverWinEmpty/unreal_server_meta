@@ -9,9 +9,13 @@ enum EAuthAction : int8 {
     EAA_SignOut, // 탈퇴
 };
 
-enum EAuthResult : int8 {
-    EAR_Uknown = -1,
-    EAR_Suceeded,     // 성공
-    EAR_AlreadyExist, // 이미 존재하는 계정
-    EAR_NotExist,     // 존재하지 않는 계정
-};
+inline FString ConvertActionTypeName(int8 In) {
+    switch (In) {
+        case EAA_LogIn:   return _T("Log-in");
+        case EAA_LogOut:  return _T("Log-out");
+        case EAA_SignUp:  return _T("Sign-in");
+        case EAA_SignOut: return _T("Sign-out");
+    };
+    checkNoEntry();
+    return "";
+}

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Enum/AuthEnum.h"
+#include "Enum/ResultEnum.h"
 #include "GameFramework/PlayerController.h"
 #include "LoginController.generated.h"
 
@@ -34,12 +35,6 @@ public:
     //! @brief 코드를 문자열로 변환합니다
     static FString ConvertActionTypeName(EAuthAction);
 
-public:
-    //! @brief 결과값 메세지로 가지고 옵니다
-    static FString GetResultMessage(int8);
-
-    //! @brief 결과값 메세지로 가지고 옵니다
-    static FString GetResultMessage(EAuthResult);
 
 public:
     void Authenticate(EAuthAction In, const FString& ID, const FString& PW); // call by client -> process by server
