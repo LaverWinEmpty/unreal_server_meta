@@ -10,8 +10,10 @@
 #include "Camera/CameraComponent.h"
 #include "UI/CharacterCustomizeUI.h"
 #include "UI/LobbyUI.h"
+#include "UI/PlayerListViewEntryData.h"
 #include "Components/Button.h"
 #include "Components/EditableText.h"
+#include "Components/ListView.h"
 
 ALobbyController::ALobbyController() {
 	// Lobby UI
@@ -79,12 +81,32 @@ void ALobbyController::BeginPlay() {
 		[ID](sql::PreparedStatement* In) {
 			In->setString(1, TCHAR_TO_UTF8(*ID));
 		},
-		[](sql::ResultSet* In) {
+		[this](sql::ResultSet* In) {
+			// TODO: 이거 비동기라 ResultSet 지워지면서 pure virtual 에러 뜨는 것 같음
+			// 게임 스레드에서 생성할 게 아닌
+			// 여기서 한 번에 생성 후에 
+			// 안전하게 게임 스레드로 넘겨야 할 것 같음
+
 			while (In->next()) {
-				//In->
-			}
+				AsyncTask(ENamedThreads::GameThread,
+					[this, In]() {
+						// TODO: bug fix
+						//UPlayerListViewEntryData* Item = NewObject<UPlayerListViewEntryData>(this);
+
+						//Item->Name = FString(In->getString("nickname").c_str());
+						//Item->BodyIndex = In->getInt("body_type");
+						//Item->FaceIndex = In->getInt("face_type");
+						//Item->HairIndex = In->getInt("hair_type");
+						//Item->UpperIndex = In->getInt("upper_type");
+						//Item->LowerIndex = In->getInt("lower_type");
+						//Item->ShoesIndex = In->getInt("shoes_type");
+
+						//LobbyUI->PlayerCharacterList->AddItem(Item);
+					}
+				);
+			} // end while
 		}
-	);
+	); // end Query
 }
 
 void ALobbyController::NextOuifit(int OutfitType) {
