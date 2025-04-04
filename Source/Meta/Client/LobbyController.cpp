@@ -31,8 +31,10 @@ void ALobbyController::BeginPlay() {
 	CharacterCustomUI->AddToViewport();
 	CharacterCustomUI->SetVisibility(ESlateVisibility::Hidden);
 
-	CharacterCustomUI->EmotionNextButton->OnClicked.AddDynamic(this, &ALobbyController::OnEmotionNext);
-	CharacterCustomUI->EmotionPrevButton->OnClicked.AddDynamic(this, &ALobbyController::OnEmotionPrev);
+	CharacterCustomUI->FaceNextButton->OnClicked.AddDynamic(this, &ALobbyController::OnFaceNext);
+	CharacterCustomUI->FacePrevButton->OnClicked.AddDynamic(this, &ALobbyController::OnFacePrev);
+	CharacterCustomUI->HairNextButton->OnClicked.AddDynamic(this, &ALobbyController::OnHairNext);
+	CharacterCustomUI->HairPrevButton->OnClicked.AddDynamic(this, &ALobbyController::OnHairPrev);
 	CharacterCustomUI->UpperNextButton->OnClicked.AddDynamic(this, &ALobbyController::OnUpperNext);
 	CharacterCustomUI->UpperPrevButton->OnClicked.AddDynamic(this, &ALobbyController::OnUpperPrev);
 	CharacterCustomUI->LowerNextButton->OnClicked.AddDynamic(this, &ALobbyController::OnLowerNext);
@@ -116,8 +118,10 @@ void ALobbyController::OnBodyPrev() {
 	BodySelect(BodyType);
 }
 
-void ALobbyController::OnEmotionNext() { NextOuifit(EPO_Face); }
-void ALobbyController::OnEmotionPrev() { PrevOutfit(EPO_Face); }
+void ALobbyController::OnFaceNext() { NextOuifit(EPO_Face); }
+void ALobbyController::OnFacePrev() { PrevOutfit(EPO_Face); }
+void ALobbyController::OnHairNext() { NextOuifit(EPO_Hair); }
+void ALobbyController::OnHairPrev() { PrevOutfit(EPO_Hair); }
 void ALobbyController::OnUpperNext() { NextOuifit(EPO_Upper); }
 void ALobbyController::OnUpperPrev() { PrevOutfit(EPO_Upper); }
 void ALobbyController::OnLowerNext() { NextOuifit(EPO_Lower); }

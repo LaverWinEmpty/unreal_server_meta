@@ -28,8 +28,10 @@ public:
 public:
 	UFUNCTION() void OnBodyNext();
 	UFUNCTION() void OnBodyPrev();
-	UFUNCTION() void OnEmotionNext();
-	UFUNCTION() void OnEmotionPrev();
+	UFUNCTION() void OnFaceNext();
+	UFUNCTION() void OnFacePrev();
+	UFUNCTION() void OnHairNext();
+	UFUNCTION() void OnHairPrev();
 	UFUNCTION() void OnUpperNext();
 	UFUNCTION() void OnUpperPrev();
 	UFUNCTION() void OnLowerNext();

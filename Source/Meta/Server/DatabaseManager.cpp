@@ -39,11 +39,30 @@ void UDatabaseManager::Setup(
     //    return;
     //}
 
-    // 테이블 생성 쿼리 테스트용
-    Query("CREATE DATABASE IF NOT EXISTS DB;");
-    Query("USE DB;");
-    Query("CREATE TABLE IF NOT EXISTS user_tbl(user_id VARCHAR(32) PRIMARY KEY, user_pw VARCHAR(64));");
-    Query("CREATE TABLE IF NOT EXISTS player_tbl(name VARCHAR(32) PRIMARY KEY NOT NULL, owner_id VARCHAR(32));");
+
+    // 테이블 검사
+    Query("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'db' AND table_name = 'user_tbl'",
+        nullptr,
+        [](sql::ResultSet* In) {
+            if (In->next()) {
+                if (In->getInt(1) <= 0) {
+                    check(false);
+                }
+            }
+        }
+    );
+
+    // 테이블 검사
+    Query("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'db' AND table_name = 'player_tbl'",
+        nullptr,
+        [](sql::ResultSet* In) {
+            if (In->next()) {
+                if (In->getInt(1) <= 0) {
+                    check(false);
+                }
+            }
+        }
+    );
 }
 
 // 풀버전

@@ -15,8 +15,10 @@ class META_API UCharacterCustomizeUI : public UUserWidget
 	GENERATED_BODY()
 	
 public:
-	UPROPERTY(meta = (BindWidget)) UButton* EmotionNextButton;
-	UPROPERTY(meta = (BindWidget)) UButton* EmotionPrevButton;
+	UPROPERTY(meta = (BindWidget)) UButton* FaceNextButton;
+	UPROPERTY(meta = (BindWidget)) UButton* FacePrevButton;
+	UPROPERTY(meta = (BindWidget)) UButton* HairNextButton;
+	UPROPERTY(meta = (BindWidget)) UButton* HairPrevButton;
 	UPROPERTY(meta = (BindWidget)) UButton* UpperNextButton;
 	UPROPERTY(meta = (BindWidget)) UButton* UpperPrevButton;
 	UPROPERTY(meta = (BindWidget)) UButton* LowerNextButton;
