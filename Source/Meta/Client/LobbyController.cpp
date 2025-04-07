@@ -284,6 +284,7 @@ void ALobbyController::SetPreviewCharacter(int32 Index) {
 			Actor->SetOutfitMesh(i, nullptr);
 		}
 		Actor->PlayAnimation(nullptr);
+		return;
 	}
 
 	const TArray<UObject*>& Items = LobbyUI->PlayerCharacterList->GetListItems();
