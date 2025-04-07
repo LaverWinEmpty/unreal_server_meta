@@ -14,7 +14,7 @@ THIRD_PARTY_INCLUDES_END
 #include "openssl/sha.h"
 
 ALoginController::ALoginController() {
-    static ConstructorHelpers::FClassFinder<UUserWidget> Finder(TEXT("/Game/Assets/UI/BP_LoginUI"));
+    static ConstructorHelpers::FClassFinder<UUserWidget> Finder(TEXT("/Game/UI/BP_LoginUI"));
     check(Finder.Class);
     LoginWidgetClass = Finder.Class;
 }

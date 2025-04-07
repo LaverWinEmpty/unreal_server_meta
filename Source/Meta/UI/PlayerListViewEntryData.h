@@ -9,6 +9,9 @@ class META_API UPlayerListViewEntryData: public UObject {
     GENERATED_BODY()
 
 public:
+    UPROPERTY(BlueprintReadWrite) int32 Index; //!< character order
+
+public:
     UPROPERTY(BlueprintReadWrite) FString Name;
     UPROPERTY(BlueprintReadWrite) int32 BodyIndex;
     UPROPERTY(BlueprintReadWrite) int32 FaceIndex;

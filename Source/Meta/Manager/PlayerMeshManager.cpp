@@ -32,15 +32,15 @@ void UPlayerMeshManager::Setup() {
 	// mesh names
 	static const TArray<FString> MeshNames[EPB_BodyCount][EPO_OutfitCount] = {
 		/* Body Type 1 */ {
-			/* Hair */ {
-				_T("SK_Hairstyle_male_010.SK_Hairstyle_male_010"),
-				_T("SK_Hairstyle_male_012.SK_Hairstyle_male_012"),
-			},
-
 			/* Face */ {
 				_T("SK_Male_emotion_usual_001.SK_Male_emotion_usual_001"),
 				_T("SK_Male_emotion_happy_002.SK_Male_emotion_happy_002"),
 				_T("SK_Male_emotion_angry_003.SK_Male_emotion_angry_003"),
+			},
+
+			/* Hair */ {
+				_T("SK_Hairstyle_male_010.SK_Hairstyle_male_010"),
+				_T("SK_Hairstyle_male_012.SK_Hairstyle_male_012"),
 			},
 
 			/* Upper */ {

@@ -11,16 +11,18 @@
 #include "UI/CharacterCustomizeUI.h"
 #include "UI/LobbyUI.h"
 #include "UI/PlayerListViewEntryData.h"
+#include "UI/PlayerListViewEntry.h"
 #include "Components/Button.h"
 #include "Components/EditableText.h"
 #include "Components/ListView.h"
+#include "Data/PlayerInfo.h"
 
 ALobbyController::ALobbyController() {
 	// Lobby UI
-	static ConstructorHelpers::FClassFinder<UUserWidget> LobbyUiFinder(TEXT("/Game/Assets/UI/BP_LobbyUI"));
+	static ConstructorHelpers::FClassFinder<UUserWidget> LobbyUiFinder(TEXT("/Game/UI/BP_LobbyUI"));
 	check(LobbyUiFinder.Class);
 	LobbyUiWidgetClass = LobbyUiFinder.Class;
-	static ConstructorHelpers::FClassFinder<UUserWidget> CharaCustomUiFinder(TEXT("/Game/Assets/UI/BP_CharacterCustomizeUI"));
+	static ConstructorHelpers::FClassFinder<UUserWidget> CharaCustomUiFinder(TEXT("/Game/UI/BP_CharacterCustomizeUI"));
 	check(CharaCustomUiFinder.Class);
 	CharacterCustomUiWidgetClass = CharaCustomUiFinder.Class;
 }
@@ -70,97 +72,107 @@ void ALobbyController::BeginPlay() {
 	auto Manager = UPlayerMeshManager::Instance(this);
 	for (int i = 0; i < EPB_BodyCount; ++i) {
 		for (int j = 0; j < EPO_OutfitCount; ++j) {
-			OutfitSelectMax[i][j] = Manager->Assets[i].Outfit[j].Num();
+			OutfitItemCount[i][j] = Manager->Assets[i].Outfit[j].Num();
 		}
 	}
 
-	// 캐릭터 정보 로딩하기
+	// 리스트뷰 바인드하도록 세팅
+	// this->LobbyUI->PlayerCharacterList->OnEntryWidgetGenerated().AddUObject(this, &ThisClass::OnEntryInit); */
+
+	// 캐릭터 정보 로딩
 	FString ID = UClientSessionManager::Instance(this)->GetPlayerID(this);
 	UDatabaseManager::Instance(this)->Query(
-		"SELECT * FROM player_tbl WHERE owner_id = ?",
+		"SELECT * FROM player_tbl WHERE owner_id = ? ORDER BY created_at ASC",
 		[ID](sql::PreparedStatement* In) {
 			In->setString(1, TCHAR_TO_UTF8(*ID));
 		},
 		[this](sql::ResultSet* In) {
-			// TODO: 이거 비동기라 ResultSet 지워지면서 pure virtual 에러 뜨는 것 같음
-			// 게임 스레드에서 생성할 게 아닌
-			// 여기서 한 번에 생성 후에 
-			// 안전하게 게임 스레드로 넘겨야 할 것 같음
-
+			TArray<FPlayerInfo> Params;
 			while (In->next()) {
-				AsyncTask(ENamedThreads::GameThread,
-					[this, In]() {
-						// TODO: bug fix
-						//UPlayerListViewEntryData* Item = NewObject<UPlayerListViewEntryData>(this);
+				FPlayerInfo Temp;
+				Temp.Name = FString(In->getString("nickname").c_str());
+				Temp.MeshInfo.BodyIndex = In->getInt("body_type");
+				Temp.MeshInfo.OutfitIndex[EPO_Face] = In->getInt("face_type");
+				Temp.MeshInfo.OutfitIndex[EPO_Hair] = In->getInt("hair_type");
+				Temp.MeshInfo.OutfitIndex[EPO_Upper] = In->getInt("upper_type");
+				Temp.MeshInfo.OutfitIndex[EPO_Lower] = In->getInt("lower_type");
+				Temp.MeshInfo.OutfitIndex[EPO_Shoes] = In->getInt("shoes_type");
+				Params.Add(Temp);
+			}
 
-						//Item->Name = FString(In->getString("nickname").c_str());
-						//Item->BodyIndex = In->getInt("body_type");
-						//Item->FaceIndex = In->getInt("face_type");
-						//Item->HairIndex = In->getInt("hair_type");
-						//Item->UpperIndex = In->getInt("upper_type");
-						//Item->LowerIndex = In->getInt("lower_type");
-						//Item->ShoesIndex = In->getInt("shoes_type");
-
-						//LobbyUI->PlayerCharacterList->AddItem(Item);
+			AsyncTask(ENamedThreads::GameThread,
+				[this, In, Params]() {
+					// 캐릭터 정보 없음
+					if (Params.Num() == 0) {
+						SetPreviewCharacter(-1); // set nullptr
+						SelectMax = 0;
 					}
-				);
-			} // end while
-		}
+
+					else {
+						SelectMax = 0;
+						for (auto& Param : Params) {
+							AddListView(Param.Name, Param.MeshInfo);
+						} // end for
+					} // end else
+				} // end lambda
+			); // end async task
+		} // end lambda
 	); // end Query
 }
 
-void ALobbyController::NextOuifit(int OutfitType) {
-	++OutfitSelected[OutfitType];
-	if (OutfitSelected[OutfitType] >= OutfitSelectMax[BodyType][OutfitType]) {
-		OutfitSelected[OutfitType] = 0;
+void ALobbyController::NextOuifit(int OutfitIndex) {
+	
+	++Selected.OutfitIndex[OutfitIndex];
+	if (Selected.OutfitIndex[OutfitIndex] >= OutfitItemCount[Selected.BodyIndex][OutfitIndex]) {
+		Selected.OutfitIndex[OutfitIndex] = 0;
 	}
-	Actor->SetOutfitMesh(OutfitType, GetSelectedOutfitMesh(OutfitType));
+	Actor->SetOutfitMesh(OutfitIndex, GetSelectedOutfitMesh(OutfitIndex));
 }
 
-void ALobbyController::PrevOutfit(int OutfitType) {
-	--OutfitSelected[OutfitType];
-	if (OutfitSelected[OutfitType] < 0) {
-		OutfitSelected[OutfitType] = OutfitSelectMax[BodyType][OutfitType] - 1;
+void ALobbyController::PrevOutfit(int OutfitIndex) {
+	--Selected.OutfitIndex[OutfitIndex];
+	if (Selected.OutfitIndex[OutfitIndex] < 0) {
+		Selected.OutfitIndex[OutfitIndex] = OutfitItemCount[Selected.BodyIndex][OutfitIndex] - 1;
 	}
-	Actor->SetOutfitMesh(OutfitType, GetSelectedOutfitMesh(OutfitType));
+	Actor->SetOutfitMesh(OutfitIndex, GetSelectedOutfitMesh(OutfitIndex));
 }
 
-void ALobbyController::BodySelect(int In) {
-	BodyType = In;
+void ALobbyController::BodySelect(int In, bool bPreInit) {
+	Selected.BodyIndex = In;
 
 	// 바디 메시 로드
 	Actor->SetBodyMesh(GetSelectedBodyMesh());
 
 	// 의상 바디에 맞춰 초기화
 	for (int i = 0; i < EPO_OutfitCount; ++i) {
-		OutfitSelected[i] = 0;
+		Selected.OutfitIndex[i] *= static_cast<int>(bPreInit); // false: 의상 초기화
 		Actor->SetOutfitMesh(i, GetSelectedOutfitMesh(i));
 	}
 
 	// Idle 모션 재생
 	Actor->PlayAnimation(
-		UPlayerMeshManager::Instance(this)->Assets[BodyType].Anim[EPA_Idle]
+		UPlayerMeshManager::Instance(this)->Assets[Selected.BodyIndex].Anim[EPA_Idle]
 	);
 }
 
 void ALobbyController::OnBodyNext() {
-	if (++BodyType >= EPB_BodyCount) {
-		BodyType = 0;
+	if (++Selected.BodyIndex >= EPB_BodyCount) {
+		Selected.BodyIndex = 0;
 	}
-	BodySelect(BodyType);
+	BodySelect(Selected.BodyIndex);
 }
 
 void ALobbyController::OnBodyPrev() {
-	if (--BodyType < 0) {
-		BodyType = EPB_BodyCount - 1;
+	if (--Selected.BodyIndex < 0) {
+		Selected.BodyIndex = EPB_BodyCount - 1;
 	}
-	BodySelect(BodyType);
+	BodySelect(Selected.BodyIndex);
 }
 
-void ALobbyController::OnFaceNext() { NextOuifit(EPO_Face); }
-void ALobbyController::OnFacePrev() { PrevOutfit(EPO_Face); }
-void ALobbyController::OnHairNext() { NextOuifit(EPO_Hair); }
-void ALobbyController::OnHairPrev() { PrevOutfit(EPO_Hair); }
+void ALobbyController::OnFaceNext()  { NextOuifit(EPO_Face); }
+void ALobbyController::OnFacePrev()  { PrevOutfit(EPO_Face); }
+void ALobbyController::OnHairNext()  { NextOuifit(EPO_Hair); }
+void ALobbyController::OnHairPrev()  { PrevOutfit(EPO_Hair); }
 void ALobbyController::OnUpperNext() { NextOuifit(EPO_Upper); }
 void ALobbyController::OnUpperPrev() { PrevOutfit(EPO_Upper); }
 void ALobbyController::OnLowerNext() { NextOuifit(EPO_Lower); }
@@ -179,26 +191,21 @@ void ALobbyController::OnCustomBegin() {
 }
 
 void ALobbyController::OnCustomEnd() {
-	// Regist DB
+	// 캐릭터 추가
+	// 플레이어 정보를 가져옵니다.
+	FString ID = UClientSessionManager::Instance(this)->GetPlayerID(this);
 	FString Name = CharacterCustomUI->NameInputBox->GetText().ToString();
-	FString ID   = UClientSessionManager::Instance(this)->GetPlayerID(this);
-	TArray<int> IndexList = {
-		BodyType,
-		OutfitSelected[EPO_Face],
-		OutfitSelected[EPO_Hair],
-		OutfitSelected[EPO_Upper],
-		OutfitSelected[EPO_Lower],
-		OutfitSelected[EPO_Shoes],
-	};
+
+	FPlayerMeshInfo Param;
 
 	UDatabaseManager::Instance(this)->Query(
 		"SELECT * FROM player_tbl WHERE nickname = ? LIMIT 1", // search 1
 		[Name](sql::PreparedStatement* In) {
 			In->setString(1, TCHAR_TO_UTF8(*Name));
 		},
-		[this, ID, Name, IndexList](sql::ResultSet* In) {
+		[this, ID, Name, Param](sql::ResultSet* In) {
 			if (In->next()) {
-			// duplicated
+				// duplicated
 				AsyncTask(ENamedThreads::GameThread,
 					[]() {
 						// TODO:
@@ -208,20 +215,35 @@ void ALobbyController::OnCustomEnd() {
 			}
 			else {
 				UDatabaseManager::Instance(this)->Query(
-					"INSERT INTO player_tbl VALUES(?, ?, ?, ?, ?, ?, ?, ?)",
-					[ID, Name, IndexList](sql::PreparedStatement* In) {
+					"INSERT INTO player_tbl ("
+						"nickname,"
+						"owner_id,"
+						"body_type,"
+						"face_type,"
+						"hair_type,"
+						"upper_type,"
+						"lower_type,"
+						"shoes_type"
+						") VALUES(?, ?, ?, ?, ?, ?, ?, ?"
+					"); ",
+					[ID, Name, Param](sql::PreparedStatement* In) {
 						In->setString(1, TCHAR_TO_UTF8(*Name));
 						In->setString(2, TCHAR_TO_UTF8(*ID));
 						int Index = 3;
-						for (auto Param : IndexList) {
-							In->setInt(Index, Param);
-							++Index;
-						}
+
+						In->setInt(Index++, Param.BodyIndex);
+						In->setInt(Index++, Param.OutfitIndex[EPO_Face]);
+						In->setInt(Index++, Param.OutfitIndex[EPO_Hair]);
+						In->setInt(Index++, Param.OutfitIndex[EPO_Upper]);
+						In->setInt(Index++, Param.OutfitIndex[EPO_Lower]);
+						In->setInt(Index,   Param.OutfitIndex[EPO_Shoes]); // 마지막이니까 굳이 ++ 안 하기
 					}
 				); // end query
 
 				AsyncTask(ENamedThreads::GameThread,
-					[this]() {
+					[this, Name, Param]() {
+						AddListView(Name, Param);
+						// 캐릭터 선택 창으로 UI 전환합니다.
 						LobbyUI->SetVisibility(ESlateVisibility::Visible);
 						CharacterCustomUI->SetVisibility(ESlateVisibility::Hidden);
 					} // end lambda
@@ -235,7 +257,8 @@ void ALobbyController::OnCustomCancel() {
 	LobbyUI->SetVisibility(ESlateVisibility::Visible);
 	CharacterCustomUI->SetVisibility(ESlateVisibility::Hidden);
 
-	// TODO: 기존 거 로딩
+	// 취소: 캐릭터가 존재하면 첫 캐릭터, 아니면 안 보임
+	SetPreviewCharacter(0);
 }
 
 void ALobbyController::OnLogOut() {
@@ -243,11 +266,49 @@ void ALobbyController::OnLogOut() {
 }
 
 USkeletalMesh* ALobbyController::GetSelectedBodyMesh() const {
-	return UPlayerMeshManager::Instance(this)->Assets[BodyType].Body;
+	return UPlayerMeshManager::Instance(this)->Assets[Selected.BodyIndex].Body;
 }
 
-USkeletalMesh* ALobbyController::GetSelectedOutfitMesh(int OutfitType) const {
-	const auto& Arr = UPlayerMeshManager::Instance(this)->Assets[BodyType].Outfit[OutfitType];
-	int         Idx = OutfitSelected[OutfitType];
+USkeletalMesh* ALobbyController::GetSelectedOutfitMesh(int OutfitIndex) const {
+	const auto& Arr = UPlayerMeshManager::Instance(this)->Assets[Selected.BodyIndex].Outfit[OutfitIndex];
+	int         Idx = Selected.OutfitIndex[OutfitIndex];
 	return Arr[Idx];
+}
+
+// 0 ~ Max - 1
+void ALobbyController::SetPreviewCharacter(int32 Index) {
+	// 범위 밖이면 nullptr로 세팅합니다.
+	if (Index >= SelectMax || Index < 0) {
+		Actor->SetBodyMesh(nullptr);
+		for (int i = 0; i < EPO_OutfitCount; ++i) {
+			Actor->SetOutfitMesh(i, nullptr);
+		}
+		Actor->PlayAnimation(nullptr);
+	}
+
+	const TArray<UObject*>& Items = LobbyUI->PlayerCharacterList->GetListItems();
+	UPlayerListViewEntryData* Item = Cast<UPlayerListViewEntryData>(Items[Index]);
+
+	// load
+	Selected.OutfitIndex[EPO_Face]  = Item->FaceIndex;
+	Selected.OutfitIndex[EPO_Hair]  = Item->HairIndex;
+	Selected.OutfitIndex[EPO_Upper] = Item->UpperIndex;
+	Selected.OutfitIndex[EPO_Lower] = Item->LowerIndex;
+	Selected.OutfitIndex[EPO_Shoes] = Item->ShoesIndex;
+
+	// pre-init
+	BodySelect(Item->BodyIndex, true);
+}
+
+void ALobbyController::AddListView(const FString& Name, const FPlayerMeshInfo& MeshInfo) {
+	UPlayerListViewEntryData* Item = NewObject<UPlayerListViewEntryData>(this);
+	Item->Index      = ++SelectMax;
+	Item->Name       = Name;
+	Item->BodyIndex  = MeshInfo.BodyIndex;
+	Item->HairIndex  = MeshInfo.OutfitIndex[EPO_Hair];
+	Item->FaceIndex  = MeshInfo.OutfitIndex[EPO_Face];
+	Item->UpperIndex = MeshInfo.OutfitIndex[EPO_Upper];
+	Item->LowerIndex = MeshInfo.OutfitIndex[EPO_Lower];
+	Item->ShoesIndex = MeshInfo.OutfitIndex[EPO_Shoes];
+	LobbyUI->PlayerCharacterList->AddItem(Item);
 }

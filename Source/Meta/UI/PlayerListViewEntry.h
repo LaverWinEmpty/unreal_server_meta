@@ -8,6 +8,7 @@
 #include "PlayerListViewEntry.generated.h"
 
 class UTextBlock;
+class UButton;
 
 UCLASS()
 class META_API UPlayerListViewEntry : public UUserWidget, public IUserObjectListEntry
@@ -18,5 +19,13 @@ public:
 	virtual void NativeOnListItemObjectSet(UObject* ListItemObject) override;
 
 public:
-	UPROPERTY(meta = (BindWidget)) UTextBlock* Text;
+	UPROPERTY(meta = (BindWidget)) UTextBlock* Name;
+	UPROPERTY(meta = (BindWidget)) UButton*    Button;
+
+public:
+	UFUNCTION()
+	void OnSelected();
+
+public:
+	int32 Index; // ...EntryData::Index
 };

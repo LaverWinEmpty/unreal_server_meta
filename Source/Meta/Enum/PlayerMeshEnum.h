@@ -10,8 +10,8 @@ enum EPlayerBody {
 };
 
 enum EPlayerOutfit {
-    EPO_Hair,
     EPO_Face,
+    EPO_Hair,
     EPO_Upper,
     EPO_Lower,
     EPO_Shoes,
@@ -25,4 +25,9 @@ enum EPlayerAnim {
 
     //
     EPA_AnimCount
+};
+
+struct FPlayerMeshInfo {
+    int BodyIndex;
+    int OutfitIndex[EPO_OutfitCount];
 };

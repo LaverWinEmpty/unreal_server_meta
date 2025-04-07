@@ -21,9 +21,9 @@ public:
 	void BeginPlay() override;
 
 public:
-	void NextOuifit(int OutfitType);
-	void PrevOutfit(int OutfitType);
-	void BodySelect(int);
+	void NextOuifit(int OutfitIndex);
+	void PrevOutfit(int OutfitIndex);
+	void BodySelect(int, bool = false); //!< false: 의상 0으로 초기화
 
 public:
 	UFUNCTION() void OnBodyNext();
@@ -48,9 +48,13 @@ public:
 	USkeletalMesh* GetSelectedOutfitMesh(int EPO) const;
 
 private:
-	int BodyType = 0;
-	int OutfitSelected[EPO_OutfitCount]; // selected outfit index
-	int OutfitSelectMax[EPB_BodyCount][EPO_OutfitCount] = { 0 };
+	FPlayerMeshInfo Selected;        //!< 현재 고른 캐릭터 정보
+	//int32           SelectIndex = 0; //!< 캐릭터 리스트 뷰에서 선택한 번호, 0인 경우 캐릭터 없음
+	int32           SelectMax   = 0; //!< 캐릭터 선택 가능 수
+
+private:
+	// 각 Body의 Outfit별 아이템 가짓수
+	int OutfitItemCount[EPB_BodyCount][EPO_OutfitCount] = { 0 };
 
 private:
 	TSubclassOf<UUserWidget> LobbyUiWidgetClass;
@@ -63,4 +67,10 @@ private:
 private:
 	ACustomizePreviewActor* Actor;
 	ACameraActor*           Viewer;
+
+public:
+	void SetPreviewCharacter(int32);
+
+public:
+	void AddListView(const FString& Name, const FPlayerMeshInfo& MeshInfo);
 };
