@@ -76,9 +76,6 @@ void ALobbyController::BeginPlay() {
 		}
 	}
 
-	// 리스트뷰 바인드하도록 세팅
-	// this->LobbyUI->PlayerCharacterList->OnEntryWidgetGenerated().AddUObject(this, &ThisClass::OnEntryInit); */
-
 	// 캐릭터 정보 로딩
 	FString ID = UClientSessionManager::Instance(this)->GetPlayerID(this);
 	UDatabaseManager::Instance(this)->Query(
@@ -196,7 +193,7 @@ void ALobbyController::OnCustomEnd() {
 	FString ID = UClientSessionManager::Instance(this)->GetPlayerID(this);
 	FString Name = CharacterCustomUI->NameInputBox->GetText().ToString();
 
-	FPlayerMeshInfo Param;
+	FPlayerMeshInfo Param = Selected;
 
 	UDatabaseManager::Instance(this)->Query(
 		"SELECT * FROM player_tbl WHERE nickname = ? LIMIT 1", // search 1
@@ -243,6 +240,9 @@ void ALobbyController::OnCustomEnd() {
 				AsyncTask(ENamedThreads::GameThread,
 					[this, Name, Param]() {
 						AddListView(Name, Param);
+						// 만든 캐릭터 정보로 로딩합니다.
+						SelectIndex = SelectMax - 1;
+
 						// 캐릭터 선택 창으로 UI 전환합니다.
 						LobbyUI->SetVisibility(ESlateVisibility::Visible);
 						CharacterCustomUI->SetVisibility(ESlateVisibility::Hidden);
@@ -277,6 +277,8 @@ USkeletalMesh* ALobbyController::GetSelectedOutfitMesh(int OutfitIndex) const {
 
 // 0 ~ Max - 1
 void ALobbyController::SetPreviewCharacter(int32 Index) {
+	SelectIndex = Index; // Save
+
 	// 범위 밖이면 nullptr로 세팅합니다.
 	if (Index >= SelectMax || Index < 0) {
 		Actor->SetBodyMesh(nullptr);
