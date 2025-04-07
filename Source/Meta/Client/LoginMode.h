@@ -13,7 +13,6 @@ UCLASS()
 class META_API ALoginMode : public AGameMode
 {
 	GENERATED_BODY()
-	
 
 public:
 	ALoginMode();

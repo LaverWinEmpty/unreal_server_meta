@@ -11,7 +11,7 @@
  *********************************************************************************************************************/
 
 #define DECLARE_MANAGER_GET_INSTANCE(TYPE)\
-    static TYPE* Instance(const UObject* CTX) { return UManager::Instance<TYPE>(CTX); }
+    static TYPE* Instance(const UObject* Context) { return UManager::Instance<TYPE>(Context); }
 
 UCLASS()
 class META_API UManager : public UGameInstanceSubsystem

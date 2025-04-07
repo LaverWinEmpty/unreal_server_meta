@@ -7,8 +7,6 @@
 #include "Components/MeshComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 
-#include "Server/AccountManager.h"
-
 // Sets default values
 AGenericCharacter::AGenericCharacter() {
     UActorComponent* Ptr;

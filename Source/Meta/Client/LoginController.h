@@ -25,16 +25,8 @@ public:
     void BeginPlay() override;
 
 public:
-    UFUNCTION() void OnLogIn();           // Login UI button
-    UFUNCTION() void OnSignUp();          // Login UI button
-
-public:
-    //! @brief 코드를 문자열로 변환합니다
-    static FString ConvertActionTypeName(int8);
-
-    //! @brief 코드를 문자열로 변환합니다
-    static FString ConvertActionTypeName(EAuthAction);
-
+    UFUNCTION() void OnLogIn();  // Login UI button
+    UFUNCTION() void OnSignUp(); // Login UI button
 
 public:
     void Authenticate(EAuthAction In, const FString& ID, const FString& PW); // call by client -> process by server

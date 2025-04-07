@@ -2,7 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "Enum/PlayerMeshEnum.h"
-#include "GameFramework/PlayerController.h"
+// #include "GameFramework/PlayerController.h"
+#include "Server/LogoutController.h"
 #include "LobbyController.generated.h"
 
 class ULobbyUI;
@@ -10,7 +11,7 @@ class UCharacterCustomizeUI;
 class ACustomizePreviewActor;
 
 UCLASS()
-class META_API ALobbyController : public APlayerController
+class META_API ALobbyController : public ALogoutController
 {
 	GENERATED_BODY()
 
@@ -48,9 +49,9 @@ public:
 	USkeletalMesh* GetSelectedOutfitMesh(int EPO) const;
 
 private:
-	FPlayerMeshInfo Selected = { 0 }; //!< 현재 고른 캐릭터 정보
-	int32           SelectIndex = 0;  //!< 캐릭터 리스트 뷰에서 선택한 번호
-	int32           SelectMax   = 0;  //!< 캐릭터 선택 가능 수
+	FPlayerMeshInfo Selected    = { 0 }; //!< 현재 고른 캐릭터 정보
+	int32           SelectIndex = 0;     //!< 캐릭터 리스트 뷰에서 선택한 번호
+	int32           SelectMax   = 0;     //!< 캐릭터 선택 가능 수
 
 private:
 	// 각 Body의 Outfit별 아이템 가짓수

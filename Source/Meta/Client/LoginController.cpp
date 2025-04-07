@@ -20,6 +20,8 @@ ALoginController::ALoginController() {
 }
 
 void ALoginController::BeginPlay() {
+    Super::BeginPlay();
+    
     // 마우스 보이게
     GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
 
@@ -120,8 +122,6 @@ void ALoginController::AuthenticateResponse_Implementation(int8 Type, int8 Resul
         check(false);
         return;
     }
-    // 테스트
-    UE_LOG(LogTemp, Warning, TEXT("%s"), *PC->GetName());
 
     PC->OnAuthenticate(Type, Result);
 }

@@ -28,35 +28,34 @@ ALobbyController::ALobbyController() {
 }
 
 void ALobbyController::BeginPlay() {
+	Super::BeginPlay();
 	// 마우스 보이게
 	GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
-
-	// TODO: DB에서 캐릭터 있으면 가져와서 세팅하기
 
 	// UI 생성 후 바인드
 	CharacterCustomUI = CreateWidget<UCharacterCustomizeUI>(this, CharacterCustomUiWidgetClass);
 	CharacterCustomUI->AddToViewport();
 	CharacterCustomUI->SetVisibility(ESlateVisibility::Hidden);
 
-	CharacterCustomUI->FaceNextButton->OnClicked.AddDynamic(this, &ALobbyController::OnFaceNext);
-	CharacterCustomUI->FacePrevButton->OnClicked.AddDynamic(this, &ALobbyController::OnFacePrev);
-	CharacterCustomUI->HairNextButton->OnClicked.AddDynamic(this, &ALobbyController::OnHairNext);
-	CharacterCustomUI->HairPrevButton->OnClicked.AddDynamic(this, &ALobbyController::OnHairPrev);
-	CharacterCustomUI->UpperNextButton->OnClicked.AddDynamic(this, &ALobbyController::OnUpperNext);
-	CharacterCustomUI->UpperPrevButton->OnClicked.AddDynamic(this, &ALobbyController::OnUpperPrev);
-	CharacterCustomUI->LowerNextButton->OnClicked.AddDynamic(this, &ALobbyController::OnLowerNext);
-	CharacterCustomUI->LowerPrevButton->OnClicked.AddDynamic(this, &ALobbyController::OnLowerPrev);
-	CharacterCustomUI->ShoesNextButton->OnClicked.AddDynamic(this, &ALobbyController::OnShoesNext);
-	CharacterCustomUI->ShoesPrevButton->OnClicked.AddDynamic(this, &ALobbyController::OnShoesPrev);
+	CharacterCustomUI->FaceNextButton->OnClicked.AddDynamic(this, &ThisClass::OnFaceNext);
+	CharacterCustomUI->FacePrevButton->OnClicked.AddDynamic(this, &ThisClass::OnFacePrev);
+	CharacterCustomUI->HairNextButton->OnClicked.AddDynamic(this, &ThisClass::OnHairNext);
+	CharacterCustomUI->HairPrevButton->OnClicked.AddDynamic(this, &ThisClass::OnHairPrev);
+	CharacterCustomUI->UpperNextButton->OnClicked.AddDynamic(this, &ThisClass::OnUpperNext);
+	CharacterCustomUI->UpperPrevButton->OnClicked.AddDynamic(this, &ThisClass::OnUpperPrev);
+	CharacterCustomUI->LowerNextButton->OnClicked.AddDynamic(this, &ThisClass::OnLowerNext);
+	CharacterCustomUI->LowerPrevButton->OnClicked.AddDynamic(this, &ThisClass::OnLowerPrev);
+	CharacterCustomUI->ShoesNextButton->OnClicked.AddDynamic(this, &ThisClass::OnShoesNext);
+	CharacterCustomUI->ShoesPrevButton->OnClicked.AddDynamic(this, &ThisClass::OnShoesPrev);
 
-	CharacterCustomUI->EnterButton->OnClicked.AddDynamic(this, &ALobbyController::OnCustomEnd);
-	CharacterCustomUI->ExitButton->OnClicked.AddDynamic(this, &ALobbyController::OnCustomCancel);
+	CharacterCustomUI->EnterButton->OnClicked.AddDynamic(this, &ThisClass::OnCustomEnd);
+	CharacterCustomUI->ExitButton->OnClicked.AddDynamic(this, &ThisClass::OnCustomCancel);
 
 	LobbyUI = CreateWidget<ULobbyUI>(this, LobbyUiWidgetClass);
 	LobbyUI->AddToViewport();
 
-	LobbyUI->LogOutButton->OnClicked.AddDynamic(this, &ALobbyController::OnLogOut);
-	LobbyUI->NewCharacterButton->OnClicked.AddDynamic(this, &ALobbyController::OnCustomBegin);
+	LobbyUI->LogOutButton->OnClicked.AddDynamic(this, &ThisClass::OnLogOut);
+	LobbyUI->NewCharacterButton->OnClicked.AddDynamic(this, &ThisClass::OnCustomBegin);
 
 	// get
 	Actor = Cast<ACustomizePreviewActor>(GetPawn());
@@ -262,7 +261,7 @@ void ALobbyController::OnCustomCancel() {
 }
 
 void ALobbyController::OnLogOut() {
-	// TODO:
+	// LogoutRequest(); // Server로 요청
 }
 
 USkeletalMesh* ALobbyController::GetSelectedBodyMesh() const {

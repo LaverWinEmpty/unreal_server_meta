@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Enum/PlayerMeshEnum.h"
 #include "GameFramework/Character.h"
 #include "GenericCharacter.generated.h"
 
@@ -13,6 +14,10 @@ class META_API AGenericCharacter: public ACharacter {
 public:
     AGenericCharacter();
     ~AGenericCharacter();
+
+public:
+    USkeletalMeshComponent* Body;
+    USkeletalMeshComponent* Outfit[EPO_OutfitCount];
 
 protected:
     virtual void BeginPlay() override;
