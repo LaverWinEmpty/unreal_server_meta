@@ -1,8 +1,13 @@
 #pragma once
 
-#include "Enum/PlayerMeshEnum.h"
+#include "PlayerOutfit.h"
+#include "PlayerInfo.generated.h"
 
-struct FPlayerInfo {
-    FString         Name;
-    FPlayerMeshInfo MeshInfo;
+USTRUCT(BlueprintType)
+struct META_API FPlayerInfo {
+    GENERATED_USTRUCT_BODY();
+
+public:
+    UPROPERTY() FString       Name;
+    UPROPERTY() FPlayerOutfit MeshInfo;
 };

@@ -16,8 +16,8 @@ public:
 	bool IsExist(const FString&);
 
 public:
-	TWeakObjectPtr<UNetConnection> GetPlayerSocket(const FString& ID);
-	FString                        GetPlayerID(APlayerController*);
+	TWeakObjectPtr<UNetConnection> GetUserSocket(const FString& ID);
+	FString                        GetUserID(APlayerController*);
 
 public:
 	void OnLogIn(const APlayerController*, const FString&);

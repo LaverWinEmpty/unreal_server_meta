@@ -1,14 +1,22 @@
 #include "Client/GameIntroHandler.h"
-
-// TODO: 추후 외부에서 세팅하는 것으로 변경
-const FString AGameIntroHandler::ServerIP = TEXT("127.0.0.1:7777");
+#include "Manager/Manager.h"
+#include "Kismet/GameplayStatics.h"
 
 AGameIntroHandler::AGameIntroHandler() {}
 
 void AGameIntroHandler::BeginPlay() {
     Super::BeginPlay();
+    
+    // make 127.0.0.1:7777/LoginLevel
+    FString Param = UManager::GetServerAddress() + _T("/LoginLevel");
+    UE_LOG(LogTemp, Log, _T("Connect to %s"), *Param);
 
-    // 서버 연결 -> Client Mode
-    FString URL = FString::Printf(TEXT("%s"), *ServerIP);
-    GetWorld()->GetFirstPlayerController()->ClientTravel(URL, ETravelType::TRAVEL_Absolute);
+    if (UManager::IsServer(this)) {
+        UGameplayStatics::OpenLevel(this, "LoginLevel", true); // change level
+        UE_LOG(LogTemp, Log, _T("Call OpenLevel from [%s]"), UManager::GetNetModeString(this));
+        return;
+    }
+
+    UE_LOG(LogTemp, Log, _T("Call ClientTravel from [%s]"), UManager::GetNetModeString(this));
+    ClientTravel(*Param, ETravelType::TRAVEL_Absolute); // change level
 }

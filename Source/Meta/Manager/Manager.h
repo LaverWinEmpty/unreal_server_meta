@@ -55,6 +55,13 @@ public:
 	static bool IsStandalone(const UObject*); //!< check standalone
 	static bool IsListen(const UObject*);     //!< check listen
 	static bool IsDedicated(const UObject*);  //!< check dedicated
+
+public:
+	static const FString& GetServerAddress(); //!< e.g. return "127.0.0.1:7777"
+	static const FString& GetDatabaseAddress(); //!< e.g. return "127.0.0.1:7777"
+
+private:
+	static FString GetAddress(const FString&, const FString&);
 };
 
 template<typename T> inline T* UManager::Instance(const UObject* WorldContext) {

@@ -15,13 +15,17 @@ public:
 public:
 	void BeginPlay() override;
 
-//public:
-//	UFUNCTION(Server, Reliable)
-//	void LogoutRequest();
-//	UFUNCTION(Client, Reliable)
-//	void LogoutResponse();
-//
-//private:
-//	void LogoutRequest_Implementation();
-//	void LogoutResponse_Implementation();
+public:
+	UFUNCTION() void OnLogOut();
+
+public:
+	UFUNCTION(Server, Reliable) void LogoutRequest();
+	UFUNCTION(Client, Reliable) void LogoutResponse();
+
+private:
+	void LogoutRequest_Implementation();
+	void LogoutResponse_Implementation();
+
+protected:
+	virtual void PostLogout();
 };

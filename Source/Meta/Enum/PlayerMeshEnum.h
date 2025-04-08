@@ -26,8 +26,3 @@ enum EPlayerAnim {
     //
     EPA_AnimCount
 };
-
-struct FPlayerMeshInfo {
-    int BodyIndex;
-    int OutfitIndex[EPO_OutfitCount];
-};

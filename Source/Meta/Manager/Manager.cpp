@@ -97,3 +97,28 @@ bool UManager::IsListen(const UObject* In) {
 bool UManager::IsDedicated(const UObject* In) {
     return GetNetMode(In) == ENetMode::NM_DedicatedServer;
 }
+
+const FString& UManager::GetServerAddress() {
+    static const FString Cache = GetAddress(_T("DedicatedIP"), _T("DedicatedPort"));
+    return Cache;
+}
+
+const FString& UManager::GetDatabaseAddress() {
+    static const FString Cache = GetAddress(_T("DatabaseIP"), _T("DatabasePort"));
+    return Cache;
+}
+
+FString UManager::GetAddress(const FString& IpINI, const FString& PortINI) {
+    check(GConfig);
+
+    static const FString Section = _T("NetConfig");
+
+    FString IP, Port;
+    IP.Reserve(22);  // length of "255.255.255.255:65535\0" 
+    Port.Reserve(6); // length of "65535\0"
+
+    GConfig->GetString(*Section, *IpINI,   IP,   GGameIni);
+    GConfig->GetString(*Section, *PortINI, Port, GGameIni);
+
+    return IP + ":" + Port;
+}

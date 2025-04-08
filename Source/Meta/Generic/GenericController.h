@@ -21,5 +21,5 @@ public:
     void BeginPlay() override;
 
 public:
-    void OnLogOut(int8 Type, int8 Result); // response
+    // void PostLogout(int8 Type, int8 Result); // response
 };

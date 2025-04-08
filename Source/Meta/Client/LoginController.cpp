@@ -21,9 +21,9 @@ ALoginController::ALoginController() {
 
 void ALoginController::BeginPlay() {
     Super::BeginPlay();
-    
+
     // 마우스 보이게
-    GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
+    bShowMouseCursor = true;
 
     // 로그인 위젯 생성
     Widget = CreateWidget<ULoginUI>(GetWorld(), LoginWidgetClass);
@@ -49,25 +49,6 @@ void ALoginController::OnSignUp() {
     FString ID = Widget->InputID->GetText().ToString();
     FString PW = Widget->InputPW->GetText().ToString();
     Authenticate(EAA_SignUp, ID, PW);
-}
-
-void ALoginController::OnAuthenticate(int8 Type, int8 Result) {
-    check(Type != EAA_LogOut) // 현재 로그인 상태가 아님
-
-    // has error
-    if (Result) {
-        Widget->ResultText->SetColorAndOpacity(FColor::Red);
-    }
-
-    // 로그인의 경우레벨 변경됨
-    else if (Type != EAA_LogIn) {
-        Widget->ResultText->SetColorAndOpacity(FColor::White);
-    }
-
-    // 결과 출력
-    Widget->ResultText->SetText(
-        FText::FromString(GetResultMessage(Result))
-    );
 }
 
 void ALoginController::Authenticate(EAuthAction Type, const FString& ID, const FString& PW) {
@@ -100,33 +81,43 @@ void ALoginController::AuthenticateRequest_Implementation(int8 Type, const FStri
     check(UManager::IsServer(this)); // Request의 실제는 서버에서 처리
 
     switch (Type) {
-    case EAA_LogIn:   LogIn(ID, PW);   break;
-    case EAA_LogOut:  LogOut(ID, PW);  break;
-    case EAA_SignUp:  SignUp(ID, PW);  break;
-    case EAA_SignOut: SignOut(ID, PW); break;
+        case EAA_LogIn:   LogIn(ID, PW);   break;
+        case EAA_LogOut:  LogOut(ID, PW);  break;
+        case EAA_SignUp:  SignUp(ID, PW);  break;
+        case EAA_SignOut: SignOut(ID, PW); break;
     }
 }
 
 void ALoginController::AuthenticateResponse_Implementation(int8 Type, int8 Result) {
-    check(UManager::IsUser(this)); // Request의 실제는 사용자쪽에서 처리
+    check(UManager::IsUser(this)); // Response의 실제는 사용자에서 처리
 
     UE_LOG(LogTemp, Log, TEXT("서버에서 클라이언트로 결과를 보냅니다"));
     if (UManager::IsDedicated(this)) {
         UE_LOG(LogTemp, Error, TEXT("응답 처리 함수가 DedicatedMode에서 호출되었습니다."));
         check(false);
     }
+    
+    check(Type != EAA_LogOut)
 
-    ALoginController* PC = Cast<ALoginController>(UManager::GetWorldSafe(this)->GetFirstPlayerController());
-    if (!PC) {
-        UE_LOG(LogTemp, Error, TEXT("해당 클라이언트의 Controller가 LoginController가 아닙니다."));
-        check(false);
+    // Login: No message
+    if (Type == EAA_LogIn) {
         return;
     }
 
-    PC->OnAuthenticate(Type, Result);
+    // has error
+    else if (Result) {
+        Widget->ResultText->SetColorAndOpacity(FColor::Red);
+    }
+    else Widget->ResultText->SetColorAndOpacity(FColor::White);
+
+    // result message
+    Widget->ResultText->SetText(
+        FText::FromString(GetResultMessage(Result))
+    );
 }
 
 void ALoginController::LogIn(const FString& ID, const FString& PW) {
+
     FString HashedPW = PasswordSHA256(PW);
 
     // Check account
@@ -210,18 +201,13 @@ void ALoginController::PostAuthenticate(const FString& ID, int8 Type, int8 Resul
 
     // TODO: 이 함수 진입 시점에서 스레드 안전한지 검사 필요함
 
+    check(UManager::IsServer(this));
     if (Result == ERC_Succeeded) {
         // 서버에서 send 전에 미리 처리할 작업을 여기서 진행합니다.
         switch (Type) {
         case EAA_LogIn:
-            // 유저라면 OpenLevel
-            if (UManager::IsUser(this)) {
-                UManager::GetWorldSafe(this)-> // 클라이언트 World의
-                    GetFirstPlayerController()-> // 컨트롤러의
-                    ClientTravel("LobbyLevel", ETravelType::TRAVEL_Absolute);
-            }
-            else check(false); // dedicated 에서 호출됨
             UClientSessionManager::Instance(this)->OnLogIn(this, ID); // Log-in
+            ClientTravel("LobbyLevel", ETravelType::TRAVEL_Absolute); // change level
             break;
         case EAA_LogOut:
             // UClientSessionManager::Instance(this)->OnLogOut(ID); // Log-out
@@ -232,7 +218,6 @@ void ALoginController::PostAuthenticate(const FString& ID, int8 Type, int8 Resul
             checkNoEntry();
         }
     }
-
     AuthenticateResponse(Type, Result); // Send
 }
 

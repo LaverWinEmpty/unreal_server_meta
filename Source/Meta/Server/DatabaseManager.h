@@ -69,7 +69,6 @@ private:
 		TFunction<void(sql::ResultSet*)> Process
 	);
 
-
 public:
 	// Default Parameter temporary
 	void Setup(

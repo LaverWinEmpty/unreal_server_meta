@@ -9,12 +9,16 @@
 class UButton;
 class UTextBlock;
 class UListView;
+class ALobbyHandler;
 
 UCLASS()
 class META_API ULobbyUI : public UUserWidget
 {
 	GENERATED_BODY()
 	
+public:
+	void Bind(ALobbyHandler*);
+
 public:
 	UPROPERTY(meta = (BindWidget))
 	UButton* LogOutButton;
@@ -28,8 +32,8 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	UListView* PlayerCharacterList;
 
-	//UPROPERTY(meta = (BindWidget))
-	//UButton* CreateRoomButton;
+	UPROPERTY(meta = (BindWidget))
+	UButton* StartButton;
 
 	//UPROPERTY(meta = (BindWidget))
 	//UButton* EnterRoomButton;

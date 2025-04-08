@@ -49,9 +49,6 @@ protected:
 
 private:
     void PostAuthenticate(const FString& ID, int8 Type, int8 Result);
-
-public:
-    void OnAuthenticate(int8, int8);
     
 private:
     FString PasswordSHA256(const FString&);

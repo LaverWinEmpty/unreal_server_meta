@@ -5,7 +5,9 @@
 #include "UI/PlayerListViewEntryData.h"
 #include "Components/TextBlock.h"
 #include "Components/Button.h"
-#include "Client/LobbyController.h"
+// #include "Client/LobbyController.h"
+#include "Lobby/LobbyHandler.h"
+#include "LobbyUI.h"
 
 void UPlayerListViewEntry::NativeOnListItemObjectSet(UObject* In) {
 	UPlayerListViewEntryData* Data = Cast<UPlayerListViewEntryData>(In);
@@ -16,10 +18,12 @@ void UPlayerListViewEntry::NativeOnListItemObjectSet(UObject* In) {
 }
 
 void UPlayerListViewEntry::OnSelected() {
-	ALobbyController* PC = Cast<ALobbyController>(GetOwningPlayer());
+	ALobbyHandler* PC = Cast<ALobbyHandler>(GetOwningPlayer());
 	if (!PC) {
 		check(false);
 		return;
 	}
 	PC->SetPreviewCharacter(Index - 1); // order to index e.g. 1 -> 0
+	// TODO: private로 바꾸고 함수로 변경하기
+	PC->LobbyUI->PlayerNameText->SetText(Name->GetText());
 }

@@ -8,12 +8,16 @@
 
 class UButton;
 class UEditableText;
+class ALobbyHandler;
 
 UCLASS()
 class META_API UCharacterCustomizeUI : public UUserWidget
 {
 	GENERATED_BODY()
 	
+public:
+	void Bind(ALobbyHandler*);
+
 public:
 	UPROPERTY(meta = (BindWidget)) UButton* FaceNextButton;
 	UPROPERTY(meta = (BindWidget)) UButton* FacePrevButton;

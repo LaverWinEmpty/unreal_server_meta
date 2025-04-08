@@ -10,6 +10,8 @@ class UEditableTextBox;
 class UButton;
 class UTextBlock;
 
+class ALobbyHandler;
+
 UCLASS()
 class META_API ULoginUI : public UUserWidget
 {
@@ -17,6 +19,9 @@ class META_API ULoginUI : public UUserWidget
 
 public:
     virtual void NativeConstruct() override;
+
+public:
+    void Bind(ALobbyHandler*);
 
 public:
 	UPROPERTY(meta = (BindWidget))

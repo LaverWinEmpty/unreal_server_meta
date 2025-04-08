@@ -9,7 +9,7 @@ void AGenericController::BeginPlay() {
     Super::BeginPlay();
 }
 
-// 응답 받고 처리되는 함수입니다.
-void AGenericController::OnLogOut(int8 Type, int8 Result) {
-    
-}
+//// 응답 받고 처리되는 함수입니다.
+//void AGenericController::PostLogout(int8 Type, int8 Result) {
+//    
+//}

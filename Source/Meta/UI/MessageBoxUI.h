@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "MessageBox.generated.h"
+#include "MessageBoxUI.generated.h"
 
 class UButton;
 class UTextBlock;

@@ -76,7 +76,10 @@ void UDatabaseManager::Query(
     Connection.Then(
         [this, UTF8Query, Prepare, Process](TFuture<FConnection> In) {
             FConnection Connection = In.Get();
-            OnQuery(*Connection, UTF8Query, Prepare, Process);
+            if (Connection.IsValid()) {
+                OnQuery(*Connection, UTF8Query, Prepare, Process);
+            }
+            else check(false);
             ReleaseConnection(Connection);
         } // end lambda
     ); // end call Connection.Then

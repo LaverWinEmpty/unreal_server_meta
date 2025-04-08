@@ -6,12 +6,16 @@ bool UClientSessionManager::IsExist(const FString& ID) {
 	return ClientSession.Find(ID) != nullptr;
 }
 
-TWeakObjectPtr<UNetConnection> UClientSessionManager::GetPlayerSocket(const FString& ID) {
+TWeakObjectPtr<UNetConnection> UClientSessionManager::GetUserSocket(const FString& ID) {
 	return ClientSession[ID];
 }
 
-FString UClientSessionManager::GetPlayerID(APlayerController* In) {
+FString UClientSessionManager::GetUserID(APlayerController* In) {
 	TWeakObjectPtr<UNetConnection> Socket = In->GetNetConnection();
+	if (Socket == nullptr) {
+		check(false);
+		return "";
+	}
 	return FString(ClientReference[Socket]);
 }
 

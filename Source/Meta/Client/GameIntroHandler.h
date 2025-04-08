@@ -17,9 +17,6 @@ UCLASS()
 class META_API AGameIntroHandler : public APlayerController {
     GENERATED_BODY()
 
-private:
-    static const FString ServerIP;
-
 public:
     AGameIntroHandler();
 
