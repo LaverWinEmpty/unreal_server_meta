@@ -316,7 +316,7 @@ void ALobbyHandler::OnBodyPrev() {
 }
 
 void ALobbyHandler::OnCustomBegin() {
-    EnterLobbyModeResponse();
+    EnterCustomizeModeResponse();
     BodySelect(0); // init body
 }
 
