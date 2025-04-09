@@ -8,13 +8,17 @@
 
 class UButton;
 class UTextBlock;
+class ALobbyHandler;
 
 UCLASS()
-class META_API UMessageBox : public UUserWidget
+class META_API UMessageBoxUI : public UUserWidget
 {
 	GENERATED_BODY()
-	
+
 public:
-	UPROPERTY(meta = (BindWidget)) UButton*    ExitButton;
+	void Bind(ALobbyHandler*);
+
+public:
+	UPROPERTY(meta = (BindWidget)) UButton*    OkButton;
 	UPROPERTY(meta = (BindWidget)) UTextBlock* MessageBox;
 };

@@ -18,7 +18,7 @@ class UMessageBoxUI;
  * Player Actor
  ******************************************************************************/
 class USkeletalMesh;
-class ACustomizePreviewActor;
+class ALobbyActor;
 
 /******************************************************************************
  * Class
@@ -41,7 +41,7 @@ public:
     void EnterLobbyModeResponse();
     void EnterLoginModeResponse();
     void EnterCustomizeModeResponse();
-    void PrintResultResponse(int8);
+    void GetResultMessageResponse(int8);
     void NewCharacterResponse(const FString&, const FPlayerOutfit&);
     void LoadCharactersResponse(const TArray<FPlayerInfo>&);
 
@@ -86,6 +86,10 @@ public:
     UFUNCTION() void OnStart();        //!< Character Customize UI StartButton
 
 public:
+    UFUNCTION() void ShowMessageBox();
+    UFUNCTION() void HideMessageBox();
+
+public:
     UFUNCTION(Client, Reliable) void EnterLoginModeToClient();
     UFUNCTION(Client, Reliable) void EnterLobbyModeToClient();
     UFUNCTION(Client, Reliable) void EnterCustomizeModeToClient();
@@ -115,15 +119,15 @@ private:
     void LoadCharactersToClient_Implementation(const TArray<FPlayerInfo>& Param);
 
 public:
-    UFUNCTION(Client, Reliable) void PrintResultToClient(int8 Code);
+    UFUNCTION(Client, Reliable) void GetResultMessageToClient(int8 Code);
 private:
-    void PrintResultToClient_Implementation(int8 Code);
+    void GetResultMessageToClient_Implementation(int8 Code);
 
 public:
     ULoginUI*              LoginUI;
     ULobbyUI*              LobbyUI;
     UCharacterCustomizeUI* CharacterCustomizeUI;
-    UMessageBoxUI*         UMessageBoxUI;
+    UMessageBoxUI*         MessageBoxUI;
 
 private:
     FPlayerOutfit Selected                            = { 0 }; //!< 현재 고른 캐릭터 정보
@@ -132,8 +136,8 @@ private:
     int OutfitItemCount[EPB_BodyCount][EPO_OutfitCount] = { 0 }; //!< 각 Body의 Outfit별 아이템 가짓수
 
 private:
-    ACustomizePreviewActor* Actor;
-    ACameraActor*           Viewer;
+    ALobbyActor*  Actor;
+    ACameraActor* Viewer;
 
 private:
     TSubclassOf<UUserWidget> LoginUiClass;

@@ -2,11 +2,10 @@
 #include "Lobby/LobbyHandler.h"
 #include "UI/LoginUI.h"
 #include "UI/LobbyUI.h"
-#include "Client/CustomizePreviewActor.h"
 #include "Manager/Manager.h"
 
 ALobbyMode::ALobbyMode() {
-    DefaultPawnClass      = nullptr; // ACustomizePreviewActor::StaticClass();
+    DefaultPawnClass      = nullptr;
     PlayerControllerClass = ALobbyHandler::StaticClass();
 }
 

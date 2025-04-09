@@ -1,12 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Client/CustomizePreviewActor.h"
+#include "Lobby/LobbyActor.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Manager/PlayerMeshManager.h"
 #include "Animation/AnimInstance.h"
 
-ACustomizePreviewActor::ACustomizePreviewActor() {
+ALobbyActor::ALobbyActor() {
 	// 클라이언트에서 사용
 
 	PrimaryActorTick.bCanEverTick = true;
@@ -25,23 +25,23 @@ ACustomizePreviewActor::ACustomizePreviewActor() {
     }
 }
 
-void ACustomizePreviewActor::BeginPlay() {
+void ALobbyActor::BeginPlay() {
 	Super::BeginPlay();
 }
 
 // Called every frame
-void ACustomizePreviewActor::Tick(float DeltaTime) {
+void ALobbyActor::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
 }
 
-void ACustomizePreviewActor::SetBodyMesh(USkeletalMesh* In) {
+void ALobbyActor::SetBodyMesh(USkeletalMesh* In) {
     Body->SetSkeletalMesh(In);
 }
 
-void ACustomizePreviewActor::SetOutfitMesh(int Index, USkeletalMesh* In) {
+void ALobbyActor::SetOutfitMesh(int Index, USkeletalMesh* In) {
     Outfit[Index]->SetSkeletalMesh(In);
 }
 
-void ACustomizePreviewActor::PlayAnimation(UAnimationAsset* In) {
+void ALobbyActor::PlayAnimation(UAnimationAsset* In) {
     Body->PlayAnimation(In, true);
 }

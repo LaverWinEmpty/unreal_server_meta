@@ -1,4 +1,5 @@
-#include "LobbyHandler.h"
+#include "Lobby/LobbyHandler.h"
+#include "Lobby/LobbyActor.h"
 
 #include "UI/LoginUI.h"
 #include "UI/LobbyUI.h"
@@ -20,8 +21,6 @@
 #include "Camera/CameraComponent.h"
 
 #include "Enum/ResultEnum.h"
-
-#include "Client/CustomizePreviewActor.h"
 
 #define UI UI_ST
 THIRD_PARTY_INCLUDES_START
@@ -82,14 +81,12 @@ void ALobbyHandler::BeginClient() {
     CharacterCustomizeUI->AddToViewport();
     CharacterCustomizeUI->Bind(this);
 
-    //MessageBoxUI = CreateWidget<UMessageBox>(GetWorld(), UMessageBoxUiClass);
-    //MessageBoxUI->SetVisibility(ESlateVisibility::Hidden);
-    //MessageBoxUI->AddToViewport();
+    MessageBoxUI = CreateWidget<UMessageBoxUI>(GetWorld(), MessageBoxUiClass);
+    MessageBoxUI->AddToViewport(1);
+    MessageBoxUI->Bind(this);
+    MessageBoxUI->SetVisibility(ESlateVisibility::Hidden); // default: hidden
 
     EnterLoginModeResponse(); // begin
-
-    // get
-    Actor = Cast<ACustomizePreviewActor>(GetPawn());
 
     // 에셋 개수 가져오기
     auto Manager = UPlayerMeshManager::Instance(this);
@@ -102,7 +99,7 @@ void ALobbyHandler::BeginClient() {
     check(IsLocalPlayerController());
 
     // create actor
-    Actor = GetWorld()->SpawnActor<ACustomizePreviewActor>(FVector{ 0 }, FRotator{ 0 });
+    Actor = GetWorld()->SpawnActor<ALobbyActor>(FVector{ 0 }, FRotator{ 0 });
     Viewer = GetWorld()->SpawnActor<ACameraActor>(FVector{ 0, 200, 90 }, FRotator{ 0, -90, 0 });
     check(Actor && Viewer);
 
@@ -113,6 +110,7 @@ void ALobbyHandler::BeginClient() {
 }
 
 void ALobbyHandler::BeginServer() {
+    // not work
 }
 
 void ALobbyHandler::EnterLobbyModeResponse() {
@@ -133,9 +131,9 @@ void ALobbyHandler::EnterCustomizeModeResponse() {
     });
 }
 
-void ALobbyHandler::PrintResultResponse(int8 Code) {
+void ALobbyHandler::GetResultMessageResponse(int8 Code) {
     UManager::Dispatch([this, Code]() {
-        RESPONSE(PrintResultToClient, Code);
+        RESPONSE(GetResultMessageToClient, Code);
     });
 }
 
@@ -165,10 +163,15 @@ void ALobbyHandler::LogInToServer_Implementation(const FString& ID, const FStrin
         },
         [this, ID](sql::ResultSet* In) {
             if(In->next()) {
-                LoadCharacterList(ID); // get list
-                EnterLobbyModeResponse();    // move
+                // insert
+                UManager::Dispatch([this, ID]() {
+                    UClientSessionManager::Instance(this)->OnLogIn(this, ID);
+                });
+
+                LoadCharacterList(ID);    // get list
+                EnterLobbyModeResponse(); // move
             }
-            PrintResultResponse(ERC_AlreadyExistID); // print message
+            else GetResultMessageResponse(ERC_InvalidID); // print message
         } // end lambda
     ); // end Query
 }
@@ -201,10 +204,10 @@ void ALobbyHandler::SignUpToServer_Implementation(const FString& ID, const FStri
                         In->setString(2, TCHAR_TO_UTF8(*HashedPW));
                     },
                     [this](sql::ResultSet*) {
-                        PrintResultToClient(ERC_Succeeded);
+                        GetResultMessageToClient(ERC_CreatedID); // ok
                     }
                 ); // end Query
-            } else PrintResultToClient(ERC_AlreadyExistID); // exist
+            } else GetResultMessageToClient(ERC_DuplicatedD); // duplicated
         } // end lambda
     ); // end Query
 }
@@ -250,13 +253,13 @@ void ALobbyHandler::NewCharacterToServer_Implementation(const FString& Name, con
                         In->setInt(8, Outfit.OutfitIndex[EPO_Shoes]);
                     },
                     [this, Name, Outfit](sql::ResultSet*) {
-                        PrintResultResponse(ERC_Succeeded);
+                        GetResultMessageResponse(ERC_CreatedCharacter); // ok
                         NewCharacterResponse(Name, Outfit);
                     }
                 );
             }
             else {
-                PrintResultResponse(ERC_AlreadyExistName);
+                GetResultMessageResponse(ERC_DuplicatedName); // duplicated
             }
         } // end process
     ); // end query
@@ -305,9 +308,9 @@ void ALobbyHandler::EnterCustomizeModeToClient_Implementation() {
     CharacterCustomizeUI->SetVisibility(ESlateVisibility::Visible);
 }
 
-void ALobbyHandler::PrintResultToClient_Implementation(int8 Code) {
-    // TODO: UI 에 메세지 출력
-    UE_LOG(LogTemp, Log, _T("%s"), GetResultMessage(Code));
+void ALobbyHandler::GetResultMessageToClient_Implementation(int8 Code) {
+    ShowMessageBox();
+    MessageBoxUI->MessageBox->SetText(FText::FromString(GetResultMessage(Code)));
 }
 
 void ALobbyHandler::OnBodyNext() {
@@ -483,6 +486,16 @@ void ALobbyHandler::LoadCharacterList(const FString& ID) {
             LoadCharactersResponse(Params);
         } // end lambda
     ); // end Query
+}
+
+void ALobbyHandler::ShowMessageBox() {
+    check(!UManager::IsDedicated(this));
+    MessageBoxUI->SetVisibility(ESlateVisibility::Visible);
+}
+
+void ALobbyHandler::HideMessageBox() {
+    check(!UManager::IsDedicated(this));
+    MessageBoxUI->SetVisibility(ESlateVisibility::Hidden);
 }
 
 void ALobbyHandler::OnLogIn() {

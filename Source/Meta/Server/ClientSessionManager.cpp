@@ -12,10 +12,6 @@ TWeakObjectPtr<UNetConnection> UClientSessionManager::GetUserSocket(const FStrin
 
 FString UClientSessionManager::GetUserID(APlayerController* In) {
 	TWeakObjectPtr<UNetConnection> Socket = In->GetNetConnection();
-	if (Socket == nullptr) {
-		check(false);
-		return "";
-	}
 	return FString(ClientReference[Socket]);
 }
 
@@ -23,6 +19,11 @@ void UClientSessionManager::OnLogIn(const APlayerController* In, const FString& 
 	check(UManager::IsServer(this));
 
 	UNetConnection* Socket = In->GetNetConnection();
+	if (Socket == nullptr) {
+		if (!IsStandalone()) {
+			checkf(false, _T("OnLonIn(): NOT STANDALONE MODE BUT NOT CONNECTED"));
+		}
+	}
 	ClientSession.Add(ID, Socket);
 	ClientReference.Add(Socket, ID);
 }

@@ -5,18 +5,18 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "Enum/PlayerMeshEnum.h"
-#include "CustomizePreviewActor.generated.h"
+#include "LobbyActor.generated.h"
 
 class USkeletalMeshComponent;
 
 UCLASS()
-class META_API ACustomizePreviewActor : public APawn
+class META_API ALobbyActor : public APawn
 {
 	GENERATED_BODY()
 	
 public:	
 	// Sets default values for this actor's properties
-	ACustomizePreviewActor();
+	ALobbyActor();
 
 protected:
 	// Called when the game starts or when spawned
