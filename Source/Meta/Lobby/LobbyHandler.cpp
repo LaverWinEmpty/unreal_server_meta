@@ -86,16 +86,10 @@ void ALobbyHandler::BeginClient() {
     //MessageBoxUI->SetVisibility(ESlateVisibility::Hidden);
     //MessageBoxUI->AddToViewport();
 
-    ToLoginUI(); // begin
+    EnterLoginModeResponse(); // begin
 
     // get
     Actor = Cast<ACustomizePreviewActor>(GetPawn());
-
-    // camera
-    Viewer = GetWorld()->SpawnActor<ACameraActor>(FVector{ 0, 200, 90 }, FRotator{ 0, -90, 0 });
-    Viewer->GetCameraComponent()->SetProjectionMode(ECameraProjectionMode::Orthographic);
-    Viewer->GetCameraComponent()->SetOrthoWidth(500.0f);
-    SetViewTarget(Viewer);
 
     // 에셋 개수 가져오기
     auto Manager = UPlayerMeshManager::Instance(this);
@@ -106,30 +100,51 @@ void ALobbyHandler::BeginClient() {
     }
 }
 
-void ALobbyHandler::BeginServer() {}
-
-void ALobbyHandler::ToLobbyUI() {
-    if (HasAuthority()) {
-        LobbyModeResponse();
-    }
-    else LobbyModeResponse_Implementation();
+void ALobbyHandler::BeginServer() {
+    // camera
+    Viewer = GetWorld()->SpawnActor<ACameraActor>(FVector{ 0, 200, 90 }, FRotator{ 0, -90, 0 });
+    Viewer->GetCameraComponent()->SetProjectionMode(ECameraProjectionMode::Orthographic);
+    Viewer->GetCameraComponent()->SetOrthoWidth(500.0f);
+    SetViewTarget(Viewer);
 }
 
-void ALobbyHandler::ToLoginUI() {
-    if (HasAuthority()) {
-        LoginModeResponse();
-    }
-    else LoginModeResponse_Implementation();
+void ALobbyHandler::EnterLobbyModeResponse() {
+    UManager::Dispatch([this]() {
+        RESPONSE(EnterLobbyModeToClient);
+    });
 }
 
-void ALobbyHandler::ToCustomUI() {
-    if (HasAuthority()) {
-        CustomModeResponse();
-    }
-    else CustomModeResponse_Implementation();
+void ALobbyHandler::EnterLoginModeResponse() {
+    UManager::Dispatch([this]() {
+        RESPONSE(EnterLoginModeToClient);
+    });
 }
 
-void ALobbyHandler::LogInRequest_Implementation(const FString& ID, const FString& PW) {
+void ALobbyHandler::EnterCustomizeModeResponse() {
+    UManager::Dispatch([this]() {
+        RESPONSE(EnterCustomizeModeToClient);
+    });
+}
+
+void ALobbyHandler::PrintResultResponse(int8 Code) {
+    UManager::Dispatch([this, Code]() {
+        RESPONSE(PrintResultToClient, Code);
+    });
+}
+
+void ALobbyHandler::NewCharacterResponse(const FString& Name, const FPlayerOutfit& Outfit) {
+    UManager::Dispatch([this, Name, Outfit] {
+        RESPONSE(NewCharacterToClient, Name, Outfit);
+    });
+}
+
+void ALobbyHandler::LoadCharactersResponse(const TArray<FPlayerInfo>& Params) {
+    UManager::Dispatch([this, Params] {
+        RESPONSE(LoadCharactersToClient, Params);
+    });
+}
+
+void ALobbyHandler::LogInToServer_Implementation(const FString& ID, const FString& PW) {
     check(UManager::IsServer(this));
 
     FString HashedPW = PasswordSHA256(PW);
@@ -143,19 +158,19 @@ void ALobbyHandler::LogInRequest_Implementation(const FString& ID, const FString
         },
         [this, ID](sql::ResultSet* In) {
             if(In->next()) {
-                LoadCharacterList(ID); // get list
-                ToLobbyUI();           // move
+                LoadPlayerCharacterList(ID); // get list
+                EnterLobbyModeResponse();    // move
             }
-            ResultResponse(ERC_AlreadyExistID); // print message
+            PrintResultResponse(ERC_AlreadyExistID); // print message
         } // end lambda
     ); // end Query
 }
 
-void ALobbyHandler::LogOutRequest_Implementation(const FString& ID) {
+void ALobbyHandler::LogOutToServer_Implementation(const FString& ID) {
     // TODO:
 }
 
-void ALobbyHandler::SignUpRequest_Implementation(const FString& ID, const FString& PW) {
+void ALobbyHandler::SignUpToServer_Implementation(const FString& ID, const FString& PW) {
     check(UManager::IsServer(this));
 
     FString HashedPW = PasswordSHA256(PW);
@@ -179,19 +194,19 @@ void ALobbyHandler::SignUpRequest_Implementation(const FString& ID, const FStrin
                         In->setString(2, TCHAR_TO_UTF8(*HashedPW));
                     },
                     [this](sql::ResultSet*) {
-                        ResultResponse(ERC_Succeeded);
+                        PrintResultToClient(ERC_Succeeded);
                     }
                 ); // end Query
-            } else ResultResponse(ERC_AlreadyExistID); // exist
+            } else PrintResultToClient(ERC_AlreadyExistID); // exist
         } // end lambda
     ); // end Query
 }
 
-void ALobbyHandler::SignOutRequest_Implementation(const FString& ID, const FString& PW) {
+void ALobbyHandler::SignOutToServer_Implementation(const FString& ID, const FString& PW) {
     // TODO:
 }
 
-void ALobbyHandler::CreateCharacterRequest_Implementation(const FString& Name, const FPlayerOutfit& Outfit) {
+void ALobbyHandler::NewCharacterToServer_Implementation(const FString& Name, const FPlayerOutfit& Outfit) {
     check(UManager::IsServer(this));
 
     // 플레이어 정보를 가져옵니다.
@@ -204,16 +219,15 @@ void ALobbyHandler::CreateCharacterRequest_Implementation(const FString& Name, c
             if (!In->next()) {
                 FString Query = _T(
                     "INSERT INTO player_tbl ("
-                    "nickname,"
-                    "owner_id,"
-                    "body_type,"
-                    "face_type,"
-                    "hair_type,"
-                    "upper_type,"
-                    "lower_type,"
-                    "shoes_type"
-                    ") VALUES(?, ?, ?, ?, ?, ?, ?, ?"
-                    "); "
+                        "nickname,"
+                        "owner_id,"
+                        "body_type,"
+                        "face_type,"
+                        "hair_type,"
+                        "upper_type,"
+                        "lower_type,"
+                        "shoes_type"
+                    ") VALUES (?, ?, ?, ?, ?, ?, ?, ?);"
                 );
 
                 UDatabaseManager::Instance(this)->Query(
@@ -229,29 +243,29 @@ void ALobbyHandler::CreateCharacterRequest_Implementation(const FString& Name, c
                         In->setInt(8, Outfit.OutfitIndex[EPO_Shoes]);
                     },
                     [this, Name, Outfit](sql::ResultSet*) {
-                        ResultResponse(ERC_Succeeded);
-                        CreateCharacterResponse(Name, Outfit);
+                        PrintResultResponse(ERC_Succeeded);
+                        NewCharacterResponse(Name, Outfit);
                     }
                 );
             }
             else {
-                ResultResponse(ERC_AlreadyExistName);
+                PrintResultResponse(ERC_AlreadyExistName);
             }
         } // end process
     ); // end query
 }
 
-void ALobbyHandler::CreateCharacterResponse_Implementation(const FString& Name, const FPlayerOutfit& Outfit) {
+void ALobbyHandler::NewCharacterToClient_Implementation(const FString& Name, const FPlayerOutfit& Outfit) {
     check(UManager::IsUser(this));
 
     AddListView(Name, Outfit);
     // 만든 캐릭터 정보로 로딩합니다.
     SelectIndex = SelectMax - 1;
     // 캐릭터 선택 창으로 UI 전환합니다.
-    ToLobbyUI();
+    EnterLobbyModeResponse();
 }
 
-void ALobbyHandler::LoadCharacterListResponse_Implementation(const TArray<FPlayerInfo>& In) {
+void ALobbyHandler::LoadCharactersToClient_Implementation(const TArray<FPlayerInfo>& In) {
     // not exist
     if(In.Num() == 0) {
         SetPreviewCharacter(-1); // set nullptr
@@ -264,25 +278,25 @@ void ALobbyHandler::LoadCharacterListResponse_Implementation(const TArray<FPlaye
     } // end else
 }
 
-void ALobbyHandler::LoginModeResponse_Implementation() {
+void ALobbyHandler::EnterLoginModeToClient_Implementation() {
     LoginUI->SetVisibility(ESlateVisibility::Visible);
     LobbyUI->SetVisibility(ESlateVisibility::Hidden);
     CharacterCustomizeUI->SetVisibility(ESlateVisibility::Hidden);
 }
 
-void ALobbyHandler::LobbyModeResponse_Implementation() {
+void ALobbyHandler::EnterLobbyModeToClient_Implementation() {
     LoginUI->SetVisibility(ESlateVisibility::Hidden);
     LobbyUI->SetVisibility(ESlateVisibility::Visible);
     CharacterCustomizeUI->SetVisibility(ESlateVisibility::Hidden);
 }
 
-void ALobbyHandler::CustomModeResponse_Implementation() {
+void ALobbyHandler::EnterCustomizeModeToClient_Implementation() {
     LoginUI->SetVisibility(ESlateVisibility::Hidden);
     LobbyUI->SetVisibility(ESlateVisibility::Hidden);
     CharacterCustomizeUI->SetVisibility(ESlateVisibility::Visible);
 }
 
-void ALobbyHandler::ResultResponse_Implementation(int8 Code) {
+void ALobbyHandler::PrintResultToClient_Implementation(int8 Code) {
     // TODO: UI 에 메세지 출력
     UE_LOG(LogTemp, Log, _T("%s"), GetResultMessage(Code));
 }
@@ -302,17 +316,17 @@ void ALobbyHandler::OnBodyPrev() {
 }
 
 void ALobbyHandler::OnCustomBegin() {
-    ToCustomUI();
+    EnterLobbyModeResponse();
     BodySelect(0); // init body
 }
 
 void ALobbyHandler::OnCustomEnd() {
     FString Name = CharacterCustomizeUI->NameInputBox->GetText().ToString();
-    CreateCharacterRequest(Name, Selected);
+    NewCharacterToServer(Name, Selected);
 }
 
 void ALobbyHandler::OnCustomCancel() {
-    ToLobbyUI();
+    EnterLobbyModeResponse();
     SetPreviewCharacter(0); // 취소: 캐릭터가 존재하면 첫 캐릭터, 아니면 안 보임
 }
 
@@ -434,7 +448,7 @@ void ALobbyHandler::AddListView(const FString& Name, const FPlayerOutfit& MeshIn
     LobbyUI->PlayerCharacterList->AddItem(Item);
 }
 
-void ALobbyHandler::LoadCharacterList(const FString& ID) {
+void ALobbyHandler::LoadPlayerCharacterList(const FString& ID) {
     check(UManager::IsServer(this));
     if (ID.IsEmpty()) {
         check(false);
@@ -457,7 +471,7 @@ void ALobbyHandler::LoadCharacterList(const FString& ID) {
                 Temp.MeshInfo.OutfitIndex[EPO_Shoes] = In->getInt("shoes_type");
                 Params.Add(Temp);
             }
-            LoadCharacterListResponse(Params);
+            LoadCharactersResponse(Params);
         } // end lambda
     ); // end Query
 }
@@ -465,13 +479,13 @@ void ALobbyHandler::LoadCharacterList(const FString& ID) {
 void ALobbyHandler::OnLogIn() {
     FString ID = LoginUI->InputID->GetText().ToString();
     FString PW = LoginUI->InputPW->GetText().ToString();
-    LogInRequest(ID, PW);
+    LogInToServer(ID, PW);
 }
 
 void ALobbyHandler::OnSignUp() {
     FString ID = LoginUI->InputID->GetText().ToString();
     FString PW = LoginUI->InputPW->GetText().ToString();
-    SignUpRequest(ID, PW);
+    SignUpToServer(ID, PW);
 }
 
 void ALobbyHandler::OnLogOut() {

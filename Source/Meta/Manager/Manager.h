@@ -4,14 +4,29 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
+#include "Async/Async.h"
 #include "Manager.generated.h"
 
 /*********************************************************************************************************************
  * Manager Base Class with Utilities
  *********************************************************************************************************************/
 
+#define TODO() checkf(false, _T("TODO"));
+
 #define DECLARE_MANAGER_GET_INSTANCE(TYPE)\
     static TYPE* Instance(const UObject* Context) { return UManager::Instance<TYPE>(Context); }
+
+#define REQUEST(Name, ...)										\
+	do {														\
+		if (HasAuthority()) Name##_Implementation(__VA_ARGS__);	\
+		else  Name(__VA_ARGS__);								\
+	} while(false)
+
+#define RESPONSE(Name, ...)							\
+	do {											\
+		if (HasAuthority()) Name(__VA_ARGS__);		\
+		else Name##_Implementation(__VA_ARGS__);	\
+	} while(false)
 
 UCLASS()
 class META_API UManager : public UGameInstanceSubsystem
@@ -62,8 +77,40 @@ public:
 
 private:
 	static FString GetAddress(const FString&, const FString&);
+
+public:
+	template<ENamedThreads::Type = ENamedThreads::GameThread>
+	static void Dispatch(TFunction<void()>);
+
+public:
+	template<ENamedThreads::Type = ENamedThreads::GameThread, typename Callable, typename... Args>
+	static void Dispatch(Callable&&, Args&&...);
 };
 
 template<typename T> inline T* UManager::Instance(const UObject* WorldContext) {
 	return WorldContext->GetWorld()->GetGameInstance()->GetSubsystem<T>();
+}
+
+template<ENamedThreads::Type TARGET>
+inline void UManager::Dispatch(TFunction<void()> Lambda) {
+	if (FTaskGraphInterface::Get().GetCurrentThreadIfKnown() == TARGET) {
+		Lambda();
+	}
+	else AsyncTask(TARGET,
+		[Lambda = MoveTemp(Lambda)]() mutable {
+			Lambda();
+		}
+	);
+}
+
+template<ENamedThreads::Type TARGET, typename Callable, typename ...Args>
+inline void UManager::Dispatch(Callable&& Procedure, Args&&... Arguments) {
+	if (FTaskGraphInterface::Get().GetCurrentThreadIfKnown() == TARGET) {
+		Procedure(Forward<Args>(Arguments)...);
+	}
+	else AsyncTask(TARGET,
+		[Func = MoveTemp(Procedure), ...Param = Forward<Args>(Arguments)]() mutable {
+			Func(Forward<Args>(Param)...);
+		}
+	);
 }

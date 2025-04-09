@@ -1,3 +1,5 @@
+#pragma once
+
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
 #include "Data/PlayerInfo.h"
@@ -35,16 +37,13 @@ public:
     void BeginServer();
 
 public:
-    // Client Server 함수 wrapping한거
-    void ToLobbyUI();
-    void ToLoginUI();
-    void ToCustomUI();
-
-//public:
-//    void TryLogin();
-//    void TryLogout();
-//    void TrySignup();
-//    void TrySignout();
+    // RPC response wrapping
+    void EnterLobbyModeResponse();
+    void EnterLoginModeResponse();
+    void EnterCustomizeModeResponse();
+    void PrintResultResponse(int8);
+    void NewCharacterResponse(const FString&, const FPlayerOutfit&);
+    void LoadCharactersResponse(const TArray<FPlayerInfo>&);
 
 public:
     static FString PasswordSHA256(const FString&);
@@ -58,7 +57,7 @@ public:
     USkeletalMesh* GetSelectedOutfitMesh(int) const;
     void           SetPreviewCharacter(int32); //!< from list view
     void           AddListView(const FString&, const FPlayerOutfit&);
-    void           LoadCharacterList(const FString& ID);
+    void           LoadPlayerCharacterList(const FString& ID);
 
 public:
     UFUNCTION() void OnLogIn();   //!< Login UI LogInButton
@@ -81,45 +80,44 @@ public:
     UFUNCTION() void OnShoesPrev() { PrevOutfit(EPO_Shoes); } //!< Character Customize UI Shoes PrevButton
 
 public:
-    // 이벤트
     UFUNCTION() void OnCustomBegin();  //!< Character Customize UI CustomBegin
     UFUNCTION() void OnCustomEnd();    //!< Character Customize UI CustomEnd
     UFUNCTION() void OnCustomCancel(); //!< Character Customize UI CustomCancel
     UFUNCTION() void OnStart();        //!< Character Customize UI StartButton
 
 public:
-    UFUNCTION(Client, Reliable) void LoginModeResponse();
-    UFUNCTION(Client, Reliable) void LobbyModeResponse();
-    UFUNCTION(Client, Reliable) void CustomModeResponse();
+    UFUNCTION(Client, Reliable) void EnterLoginModeToClient();
+    UFUNCTION(Client, Reliable) void EnterLobbyModeToClient();
+    UFUNCTION(Client, Reliable) void EnterCustomizeModeToClient();
 private:
-    void LoginModeResponse_Implementation();
-    void LobbyModeResponse_Implementation();
-    void CustomModeResponse_Implementation();
+    void EnterLoginModeToClient_Implementation();
+    void EnterLobbyModeToClient_Implementation();
+    void EnterCustomizeModeToClient_Implementation();
 
 protected:
-    UFUNCTION(Server, Reliable) void LogInRequest(const FString& ID, const FString& PW);
-    UFUNCTION(Server, Reliable) void LogOutRequest(const FString& ID);
-    UFUNCTION(Server, Reliable) void SignUpRequest(const FString& ID, const FString& PW);
-    UFUNCTION(Server, Reliable) void SignOutRequest(const FString& ID, const FString& PW);
+    UFUNCTION(Server, Reliable) void LogInToServer(const FString& ID, const FString& PW);
+    UFUNCTION(Server, Reliable) void LogOutToServer(const FString& ID);
+    UFUNCTION(Server, Reliable) void SignUpToServer(const FString& ID, const FString& PW);
+    UFUNCTION(Server, Reliable) void SignOutToServer(const FString& ID, const FString& PW);
 private:
-    void LogInRequest_Implementation(const FString& ID, const FString& PW);
-    void LogOutRequest_Implementation(const FString& ID);
-    void SignUpRequest_Implementation(const FString& ID, const FString& PW);
-    void SignOutRequest_Implementation(const FString& ID, const FString& PW);
+    void LogInToServer_Implementation(const FString& ID, const FString& PW);
+    void LogOutToServer_Implementation(const FString& ID);
+    void SignUpToServer_Implementation(const FString& ID, const FString& PW);
+    void SignOutToServer_Implementation(const FString& ID, const FString& PW);
 
 public:
-    UFUNCTION(Server, Reliable) void CreateCharacterRequest(const FString& Name, const FPlayerOutfit& Outfit);
-    UFUNCTION(Client, Reliable) void CreateCharacterResponse(const FString& Name, const FPlayerOutfit& Outfit);
-    UFUNCTION(Client, Reliable) void LoadCharacterListResponse(const TArray<FPlayerInfo>& Param);
+    UFUNCTION(Server, Reliable) void NewCharacterToServer(const FString& Name, const FPlayerOutfit& Outfit);
+    UFUNCTION(Client, Reliable) void NewCharacterToClient(const FString& Name, const FPlayerOutfit& Outfit);
+    UFUNCTION(Client, Reliable) void LoadCharactersToClient(const TArray<FPlayerInfo>& Param);
 private:
-    void CreateCharacterRequest_Implementation(const FString& Name, const FPlayerOutfit& Outfit);
-    void CreateCharacterResponse_Implementation(const FString& Name, const FPlayerOutfit& Outfit);
-    void LoadCharacterListResponse_Implementation(const TArray<FPlayerInfo>& Param);
+    void NewCharacterToServer_Implementation(const FString& Name, const FPlayerOutfit& Outfit);
+    void NewCharacterToClient_Implementation(const FString& Name, const FPlayerOutfit& Outfit);
+    void LoadCharactersToClient_Implementation(const TArray<FPlayerInfo>& Param);
 
 public:
-    UFUNCTION(Client, Reliable) void ResultResponse(int8 Code);
+    UFUNCTION(Client, Reliable) void PrintResultToClient(int8 Code);
 private:
-    void ResultResponse_Implementation(int8 Code);
+    void PrintResultToClient_Implementation(int8 Code);
 
 public:
     ULoginUI*              LoginUI;
