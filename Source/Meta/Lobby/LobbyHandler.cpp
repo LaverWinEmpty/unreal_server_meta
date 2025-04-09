@@ -98,14 +98,22 @@ void ALobbyHandler::BeginClient() {
             OutfitItemCount[i][j] = Manager->Assets[i].Outfit[j].Num();
         }
     }
-}
 
-void ALobbyHandler::BeginServer() {
-    // camera
+    check(IsLocalPlayerController());
+
+    // create actor
+    Actor = GetWorld()->SpawnActor<ACustomizePreviewActor>(FVector{ 0 }, FRotator{ 0 });
+    check(Actor);
+
+    // set camera
+    check(Viewer);
     Viewer = GetWorld()->SpawnActor<ACameraActor>(FVector{ 0, 200, 90 }, FRotator{ 0, -90, 0 });
     Viewer->GetCameraComponent()->SetProjectionMode(ECameraProjectionMode::Orthographic);
     Viewer->GetCameraComponent()->SetOrthoWidth(500.0f);
     SetViewTarget(Viewer);
+}
+
+void ALobbyHandler::BeginServer() {
 }
 
 void ALobbyHandler::EnterLobbyModeResponse() {
@@ -158,7 +166,7 @@ void ALobbyHandler::LogInToServer_Implementation(const FString& ID, const FStrin
         },
         [this, ID](sql::ResultSet* In) {
             if(In->next()) {
-                LoadPlayerCharacterList(ID); // get list
+                LoadCharacterList(ID); // get list
                 EnterLobbyModeResponse();    // move
             }
             PrintResultResponse(ERC_AlreadyExistID); // print message
@@ -258,9 +266,11 @@ void ALobbyHandler::NewCharacterToServer_Implementation(const FString& Name, con
 void ALobbyHandler::NewCharacterToClient_Implementation(const FString& Name, const FPlayerOutfit& Outfit) {
     check(UManager::IsUser(this));
 
-    AddListView(Name, Outfit);
+    AddCharacterToList(Name, Outfit);
+
     // 만든 캐릭터 정보로 로딩합니다.
     SelectIndex = SelectMax - 1;
+
     // 캐릭터 선택 창으로 UI 전환합니다.
     EnterLobbyModeResponse();
 }
@@ -268,12 +278,12 @@ void ALobbyHandler::NewCharacterToClient_Implementation(const FString& Name, con
 void ALobbyHandler::LoadCharactersToClient_Implementation(const TArray<FPlayerInfo>& In) {
     // not exist
     if(In.Num() == 0) {
-        SetPreviewCharacter(-1); // set nullptr
+        SelectCharacterFromList(-1); // set nullptr
         SelectMax = 0;
     } else {
         SelectMax = 0;
         for(auto& Param : In) {
-            AddListView(Param.Name, Param.MeshInfo);
+            AddCharacterToList(Param.Name, Param.MeshInfo);
         } // end for
     } // end else
 }
@@ -327,7 +337,7 @@ void ALobbyHandler::OnCustomEnd() {
 
 void ALobbyHandler::OnCustomCancel() {
     EnterLobbyModeResponse();
-    SetPreviewCharacter(0); // 취소: 캐릭터가 존재하면 첫 캐릭터, 아니면 안 보임
+    SelectCharacterFromList(0); // 취소: 캐릭터가 존재하면 첫 캐릭터, 아니면 안 보임
 }
 
 void ALobbyHandler::OnStart() {
@@ -406,7 +416,7 @@ USkeletalMesh* ALobbyHandler::GetSelectedOutfitMesh(int OutfitIndex) const {
 }
 
 // 0 ~ Max - 1
-void ALobbyHandler::SetPreviewCharacter(int32 Index) {
+void ALobbyHandler::SelectCharacterFromList(int32 Index) {
     SelectIndex = Index; // Save
 
     // 범위 밖이면 nullptr로 세팅합니다.
@@ -433,7 +443,7 @@ void ALobbyHandler::SetPreviewCharacter(int32 Index) {
     BodySelect(Item->BodyIndex, true);
 }
 
-void ALobbyHandler::AddListView(const FString& Name, const FPlayerOutfit& MeshInfo) {
+void ALobbyHandler::AddCharacterToList(const FString& Name, const FPlayerOutfit& MeshInfo) {
     check(UManager::IsUser(this));
 
     UPlayerListViewEntryData* Item = NewObject<UPlayerListViewEntryData>(this);
@@ -448,7 +458,7 @@ void ALobbyHandler::AddListView(const FString& Name, const FPlayerOutfit& MeshIn
     LobbyUI->PlayerCharacterList->AddItem(Item);
 }
 
-void ALobbyHandler::LoadPlayerCharacterList(const FString& ID) {
+void ALobbyHandler::LoadCharacterList(const FString& ID) {
     check(UManager::IsServer(this));
     if (ID.IsEmpty()) {
         check(false);

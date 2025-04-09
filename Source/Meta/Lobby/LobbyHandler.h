@@ -55,9 +55,9 @@ public:
     void           BodySelect(int, bool = false); //!< false: outfit init, else keep
     USkeletalMesh* GetSelectedBodyMesh() const;
     USkeletalMesh* GetSelectedOutfitMesh(int) const;
-    void           SetPreviewCharacter(int32); //!< from list view
-    void           AddListView(const FString&, const FPlayerOutfit&);
-    void           LoadPlayerCharacterList(const FString& ID);
+    void           AddCharacterToList(const FString&, const FPlayerOutfit&);
+    void           SelectCharacterFromList(int32);
+    void           LoadCharacterList(const FString& ID);
 
 public:
     UFUNCTION() void OnLogIn();   //!< Login UI LogInButton
@@ -124,7 +124,6 @@ public:
     ULobbyUI*              LobbyUI;
     UCharacterCustomizeUI* CharacterCustomizeUI;
     UMessageBoxUI*         UMessageBoxUI;
-
 
 private:
     FPlayerOutfit Selected                            = { 0 }; //!< 현재 고른 캐릭터 정보

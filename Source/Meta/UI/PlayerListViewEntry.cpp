@@ -23,7 +23,7 @@ void UPlayerListViewEntry::OnSelected() {
 		check(false);
 		return;
 	}
-	PC->SetPreviewCharacter(Index - 1); // order to index e.g. 1 -> 0
+	PC->SelectCharacterFromList(Index - 1); // order to index e.g. 1 -> 0
 	// TODO: private로 바꾸고 함수로 변경하기
 	PC->LobbyUI->PlayerNameText->SetText(Name->GetText());
 }

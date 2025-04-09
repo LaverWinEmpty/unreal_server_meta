@@ -6,7 +6,7 @@
 #include "Manager/Manager.h"
 
 ALobbyMode::ALobbyMode() {
-    DefaultPawnClass      = ACustomizePreviewActor::StaticClass();
+    DefaultPawnClass      = nullptr; // ACustomizePreviewActor::StaticClass();
     PlayerControllerClass = ALobbyHandler::StaticClass();
 }
 
