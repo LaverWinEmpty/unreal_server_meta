@@ -2,27 +2,27 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
-#include "Data/PlayerInfo.h"
+#include "Data/PlayerPreset.h"
 #include "LobbyHandler.generated.h"
 
-/******************************************************************************
+/**************************************************************************************************
  * Widget
- ******************************************************************************/
+ **************************************************************************************************
 class UUserWidget;
 class ULoginUI;
 class ULobbyUI;
 class UCharacterCustomizeUI;
 class UMessageBoxUI;
 
-/******************************************************************************
+/**************************************************************************************************
  * Player Actor
- ******************************************************************************/
+ **************************************************************************************************
 class USkeletalMesh;
 class ALobbyActor;
 
-/******************************************************************************
+/**************************************************************************************************
  * Class
- ******************************************************************************/
+ **************************************************************************************************/
 UCLASS() class META_API ALobbyHandler: public APlayerController {
     GENERATED_BODY()
 
@@ -42,8 +42,8 @@ public:
     void EnterLoginModeResponse();
     void EnterCustomizeModeResponse();
     void GetResultMessageResponse(int8);
-    void NewCharacterResponse(const FString&, const FPlayerOutfit&);
-    void LoadCharactersResponse(const TArray<FPlayerInfo>&);
+    void NewCharacterResponse(const FPlayerPreset&);
+    void LoadCharactersResponse(const TArray<FPlayerPreset>&);
 
 public:
     static FString PasswordSHA256(const FString&);
@@ -55,7 +55,7 @@ public:
     void           BodySelect(int, bool = false); //!< false: outfit init, else keep
     USkeletalMesh* GetSelectedBodyMesh() const;
     USkeletalMesh* GetSelectedOutfitMesh(int) const;
-    void           AddCharacterToList(const FString&, const FPlayerOutfit&);
+    void           AddCharacterToList(const FPlayerPreset&);
     void           SelectCharacterFromList(int32);
     void           LoadCharacterList(const FString& ID);
 
@@ -68,16 +68,16 @@ public:
 public:
     UFUNCTION() void OnBodyNext();                            //!< Character Customize UI Body NextButton
     UFUNCTION() void OnBodyPrev();                            //!< Character Customize UI Body PrevButton
-    UFUNCTION() void OnFaceNext() { NextOutfit(EPO_Face); }   //!< Character Customize UI Face NextButton
-    UFUNCTION() void OnFacePrev() { PrevOutfit(EPO_Face); }   //!< Character Customize UI Face PrevButton
-    UFUNCTION() void OnHairNext() { NextOutfit(EPO_Hair); }   //!< Character Customize UI Hair NextButton
-    UFUNCTION() void OnHairPrev() { PrevOutfit(EPO_Hair); }   //!< Character Customize UI Hair PrevButton
-    UFUNCTION() void OnUpperNext() { NextOutfit(EPO_Upper); } //!< Character Customize UI Upper NextButton
-    UFUNCTION() void OnUpperPrev() { PrevOutfit(EPO_Upper); } //!< Character Customize UI Upper PrevButton
-    UFUNCTION() void OnLowerNext() { NextOutfit(EPO_Lower); } //!< Character Customize UI Lower NextButton
-    UFUNCTION() void OnLowerPrev() { PrevOutfit(EPO_Lower); } //!< Character Customize UI Lower PrevButton
-    UFUNCTION() void OnShoesNext() { NextOutfit(EPO_Shoes); } //!< Character Customize UI Shoes NextButton
-    UFUNCTION() void OnShoesPrev() { PrevOutfit(EPO_Shoes); } //!< Character Customize UI Shoes PrevButton
+    UFUNCTION() void OnFaceNext() { NextOutfit(EPL_Face); }   //!< Character Customize UI Face NextButton
+    UFUNCTION() void OnFacePrev() { PrevOutfit(EPL_Face); }   //!< Character Customize UI Face PrevButton
+    UFUNCTION() void OnHairNext() { NextOutfit(EPL_Hair); }   //!< Character Customize UI Hair NextButton
+    UFUNCTION() void OnHairPrev() { PrevOutfit(EPL_Hair); }   //!< Character Customize UI Hair PrevButton
+    UFUNCTION() void OnUpperNext() { NextOutfit(EPL_Upper); } //!< Character Customize UI Upper NextButton
+    UFUNCTION() void OnUpperPrev() { PrevOutfit(EPL_Upper); } //!< Character Customize UI Upper PrevButton
+    UFUNCTION() void OnLowerNext() { NextOutfit(EPL_Lower); } //!< Character Customize UI Lower NextButton
+    UFUNCTION() void OnLowerPrev() { PrevOutfit(EPL_Lower); } //!< Character Customize UI Lower PrevButton
+    UFUNCTION() void OnShoesNext() { NextOutfit(EPL_Shoes); } //!< Character Customize UI Shoes NextButton
+    UFUNCTION() void OnShoesPrev() { PrevOutfit(EPL_Shoes); } //!< Character Customize UI Shoes PrevButton
 
 public:
     UFUNCTION() void OnCustomBegin();  //!< Character Customize UI CustomBegin
@@ -110,16 +110,16 @@ private:
     void SignOutToServer_Implementation(const FString& ID, const FString& PW);
 
 public:
-    UFUNCTION(Server, Reliable) void NewCharacterToServer(const FString& Name, const FPlayerOutfit& Outfit);
-    UFUNCTION(Client, Reliable) void NewCharacterToClient(const FString& Name, const FPlayerOutfit& Outfit);
-    UFUNCTION(Client, Reliable) void LoadCharactersToClient(const TArray<FPlayerInfo>& Param);
+    UFUNCTION(Server, Reliable) void NewCharacterToServer(const FPlayerPreset& Outfit);
+    UFUNCTION(Client, Reliable) void NewCharacterToClient(const FPlayerPreset& Outfit);
+    UFUNCTION(Client, Reliable) void LoadCharactersToClient(const TArray<FPlayerPreset>& Param);
 private:
-    void NewCharacterToServer_Implementation(const FString& Name, const FPlayerOutfit& Outfit);
-    void NewCharacterToClient_Implementation(const FString& Name, const FPlayerOutfit& Outfit);
-    void LoadCharactersToClient_Implementation(const TArray<FPlayerInfo>& Param);
+    void NewCharacterToServer_Implementation(const FPlayerPreset& Outfit);
+    void NewCharacterToClient_Implementation(const FPlayerPreset& Outfit);
+    void LoadCharactersToClient_Implementation(const TArray<FPlayerPreset>& Param);
 
 public:
-    UFUNCTION(Client, Reliable) void GetResultMessageToClient(int8 Code);
+    UFUNCTION(Client, Reliable)void GetResultMessageToClient(int8 Code);
 private:
     void GetResultMessageToClient_Implementation(int8 Code);
 
@@ -130,10 +130,12 @@ public:
     UMessageBoxUI*         MessageBoxUI;
 
 private:
-    FPlayerOutfit Selected                            = { 0 }; //!< 현재 고른 캐릭터 정보
-    int32           SelectIndex                         = 0;     //!< 캐릭터 리스트 뷰에서 선택한 번호
-    int32           SelectMax                           = 0;     //!< 캐릭터 선택 가능 수
-    int OutfitItemCount[EPB_BodyCount][EPO_OutfitCount] = { 0 }; //!< 각 Body의 Outfit별 아이템 가짓수
+    FPlayerPreset Selected    = { 0 }; //!< 현재 고른 캐릭터 정보
+    int32         SelectIndex = 0;     //!< 캐릭터 리스트 뷰에서 선택한 번호
+    int32         SelectMax   = 0;     //!< 캐릭터 선택 가능 수
+
+private:
+    int OutfitItemCount[EPB_Count][EPL_Count] = { 0 }; //!< 각 Body의 Outfit별 아이템 가짓수
 
 private:
     ALobbyActor*  Actor;

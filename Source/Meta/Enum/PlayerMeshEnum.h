@@ -1,28 +1,26 @@
 #pragma once
 
-#include "CoreMinimal.h"
-
 enum EPlayerBody {
     EPB_Male, // 남캐만 지원
 
     //
-    EPB_BodyCount
+    EPB_Count
 };
 
-enum EPlayerOutfit {
-    EPO_Face,
-    EPO_Hair,
-    EPO_Upper,
-    EPO_Lower,
-    EPO_Shoes,
+enum EPlayerLook {
+    EPL_Face,
+    EPL_Hair,
+    EPL_Upper,
+    EPL_Lower,
+    EPL_Shoes,
 
     //
-    EPO_OutfitCount
+    EPL_Count
 };
 
 enum EPlayerAnim {
     EPA_Idle,
 
     //
-    EPA_AnimCount
+    EPA_Count
 };

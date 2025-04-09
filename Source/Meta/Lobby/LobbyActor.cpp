@@ -13,13 +13,13 @@ ALobbyActor::ALobbyActor() {
 
     // Set Component
     Body = CreateDefaultSubobject<USkeletalMeshComponent>(_T("Body"));
-    for (int i = 0; i < EPO_OutfitCount; ++i) {
+    for (int i = 0; i < EPL_Count; ++i) {
         Outfit[i] = CreateDefaultSubobject<USkeletalMeshComponent>(*FString::Printf(_T("Outfit_%d"), i));
     }
     
     // Set hierarchy for same animation
     RootComponent = Body;
-    for (int i = 0; i < EPO_OutfitCount; ++i) {
+    for (int i = 0; i < EPL_Count; ++i) {
         Outfit[i]->SetupAttachment(Body);
         Outfit[i]->SetLeaderPoseComponent(Body, true);
     }

@@ -13,10 +13,10 @@ public:
 
 public:
     UPROPERTY(BlueprintReadWrite) FString Name;
-    UPROPERTY(BlueprintReadWrite) int32 BodyIndex;
-    UPROPERTY(BlueprintReadWrite) int32 FaceIndex;
-    UPROPERTY(BlueprintReadWrite) int32 HairIndex;
-    UPROPERTY(BlueprintReadWrite) int32 UpperIndex;
-    UPROPERTY(BlueprintReadWrite) int32 LowerIndex;
-    UPROPERTY(BlueprintReadWrite) int32 ShoesIndex;
+    UPROPERTY(BlueprintReadWrite) int32 BodyCode;
+    UPROPERTY(BlueprintReadWrite) int32 FaceCode;
+    UPROPERTY(BlueprintReadWrite) int32 HairCode;
+    UPROPERTY(BlueprintReadWrite) int32 UpperCode;
+    UPROPERTY(BlueprintReadWrite) int32 LowerCode;
+    UPROPERTY(BlueprintReadWrite) int32 ShoesCode;
 };

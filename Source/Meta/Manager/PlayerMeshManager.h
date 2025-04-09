@@ -7,9 +7,6 @@
 #include "Enum/PlayerMeshEnum.h"
 #include "PlayerMeshManager.generated.h"
 
-/**
- * 
- */
 UCLASS()
 class META_API UPlayerMeshManager : public UManager
 {
@@ -39,8 +36,8 @@ public:
 public:
 	struct FAsset {
 		USkeletalMesh*         Body;
-		TArray<USkeletalMesh*> Outfit[EPO_OutfitCount];
-		UAnimationAsset*       Anim[EPA_AnimCount];
+		TArray<USkeletalMesh*> Outfit[EPL_Count];
+		UAnimationAsset*       Anim[EPA_Count];
 	};
-	FAsset Assets[EPB_BodyCount];
+	FAsset Assets[EPB_Count];
 };

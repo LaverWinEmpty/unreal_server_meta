@@ -90,8 +90,8 @@ void ALobbyHandler::BeginClient() {
 
     // 에셋 개수 가져오기
     auto Manager = UPlayerMeshManager::Instance(this);
-    for(int i = 0; i < EPB_BodyCount; ++i) {
-        for(int j = 0; j < EPO_OutfitCount; ++j) {
+    for(int i = 0; i < EPB_Count; ++i) {
+        for(int j = 0; j < EPL_Count; ++j) {
             OutfitItemCount[i][j] = Manager->Assets[i].Outfit[j].Num();
         }
     }
@@ -137,13 +137,13 @@ void ALobbyHandler::GetResultMessageResponse(int8 Code) {
     });
 }
 
-void ALobbyHandler::NewCharacterResponse(const FString& Name, const FPlayerOutfit& Outfit) {
-    UManager::Dispatch([this, Name, Outfit] {
-        RESPONSE(NewCharacterToClient, Name, Outfit);
+void ALobbyHandler::NewCharacterResponse(const FPlayerPreset& Preset) {
+    UManager::Dispatch([this, Preset] {
+        RESPONSE(NewCharacterToClient, Preset);
     });
 }
 
-void ALobbyHandler::LoadCharactersResponse(const TArray<FPlayerInfo>& Params) {
+void ALobbyHandler::LoadCharactersResponse(const TArray<FPlayerPreset>& Params) {
     UManager::Dispatch([this, Params] {
         RESPONSE(LoadCharactersToClient, Params);
     });
@@ -216,7 +216,7 @@ void ALobbyHandler::SignOutToServer_Implementation(const FString& ID, const FStr
     // TODO:
 }
 
-void ALobbyHandler::NewCharacterToServer_Implementation(const FString& Name, const FPlayerOutfit& Outfit) {
+void ALobbyHandler::NewCharacterToServer_Implementation(const FPlayerPreset& Preset) {
     check(UManager::IsServer(this));
 
     // 플레이어 정보를 가져옵니다.
@@ -224,8 +224,8 @@ void ALobbyHandler::NewCharacterToServer_Implementation(const FString& Name, con
 
     UDatabaseManager::Instance(this)->Query(
         "SELECT * FROM player_tbl WHERE nickname = ? LIMIT 1", // search 1
-        [Name](sql::PreparedStatement* In) { In->setString(1, TCHAR_TO_UTF8(*Name)); },
-        [this, ID, Name, Outfit](sql::ResultSet* In) {
+        [Preset](sql::PreparedStatement* In) { In->setString(1, TCHAR_TO_UTF8(*Preset.Name)); },
+        [this, ID, Preset](sql::ResultSet* In) {
             if (!In->next()) {
                 FString Query = _T(
                     "INSERT INTO player_tbl ("
@@ -242,19 +242,19 @@ void ALobbyHandler::NewCharacterToServer_Implementation(const FString& Name, con
 
                 UDatabaseManager::Instance(this)->Query(
                     Query,
-                    [ID, Name, Outfit](sql::PreparedStatement* In) {
-                        In->setString(1, TCHAR_TO_UTF8(*Name));
+                    [ID, Preset](sql::PreparedStatement* In) {
+                        In->setString(1, TCHAR_TO_UTF8(*Preset.Name));
                         In->setString(2, TCHAR_TO_UTF8(*ID));
-                        In->setInt(3, Outfit.BodyIndex);
-                        In->setInt(4, Outfit.OutfitIndex[EPO_Face]);
-                        In->setInt(5, Outfit.OutfitIndex[EPO_Hair]);
-                        In->setInt(6, Outfit.OutfitIndex[EPO_Upper]);
-                        In->setInt(7, Outfit.OutfitIndex[EPO_Lower]);
-                        In->setInt(8, Outfit.OutfitIndex[EPO_Shoes]);
+                        In->setInt(3, Preset.BodyCode);
+                        In->setInt(4, Preset.LookCode[EPL_Face]);
+                        In->setInt(5, Preset.LookCode[EPL_Hair]);
+                        In->setInt(6, Preset.LookCode[EPL_Upper]);
+                        In->setInt(7, Preset.LookCode[EPL_Lower]);
+                        In->setInt(8, Preset.LookCode[EPL_Shoes]);
                     },
-                    [this, Name, Outfit](sql::ResultSet*) {
+                    [this, Preset](sql::ResultSet*) {
                         GetResultMessageResponse(ERC_CreatedCharacter); // ok
-                        NewCharacterResponse(Name, Outfit);
+                        NewCharacterResponse(Preset);
                     }
                 );
             }
@@ -265,10 +265,10 @@ void ALobbyHandler::NewCharacterToServer_Implementation(const FString& Name, con
     ); // end query
 }
 
-void ALobbyHandler::NewCharacterToClient_Implementation(const FString& Name, const FPlayerOutfit& Outfit) {
+void ALobbyHandler::NewCharacterToClient_Implementation(const FPlayerPreset& Preset) {
     check(UManager::IsUser(this));
 
-    AddCharacterToList(Name, Outfit);
+    AddCharacterToList(Preset);
 
     // 만든 캐릭터 정보로 로딩합니다.
     SelectIndex = SelectMax - 1;
@@ -277,7 +277,7 @@ void ALobbyHandler::NewCharacterToClient_Implementation(const FString& Name, con
     EnterLobbyModeResponse();
 }
 
-void ALobbyHandler::LoadCharactersToClient_Implementation(const TArray<FPlayerInfo>& In) {
+void ALobbyHandler::LoadCharactersToClient_Implementation(const TArray<FPlayerPreset>& In) {
     // not exist
     if(In.Num() == 0) {
         SelectCharacterFromList(-1); // set nullptr
@@ -285,7 +285,7 @@ void ALobbyHandler::LoadCharactersToClient_Implementation(const TArray<FPlayerIn
     } else {
         SelectMax = 0;
         for(auto& Param : In) {
-            AddCharacterToList(Param.Name, Param.MeshInfo);
+            AddCharacterToList(Param);
         } // end for
     } // end else
 }
@@ -314,17 +314,17 @@ void ALobbyHandler::GetResultMessageToClient_Implementation(int8 Code) {
 }
 
 void ALobbyHandler::OnBodyNext() {
-    if(++Selected.BodyIndex >= EPB_BodyCount) {
-        Selected.BodyIndex = 0;
+    if(++Selected.BodyCode >= EPB_Count) {
+        Selected.BodyCode = 0;
     }
-    BodySelect(Selected.BodyIndex);
+    BodySelect(Selected.BodyCode);
 }
 
 void ALobbyHandler::OnBodyPrev() {
-    if(--Selected.BodyIndex < 0) {
-        Selected.BodyIndex = EPB_BodyCount - 1;
+    if(--Selected.BodyCode < 0) {
+        Selected.BodyCode = EPB_Count - 1;
     }
-    BodySelect(Selected.BodyIndex);
+    BodySelect(Selected.BodyCode);
 }
 
 void ALobbyHandler::OnCustomBegin() {
@@ -333,8 +333,8 @@ void ALobbyHandler::OnCustomBegin() {
 }
 
 void ALobbyHandler::OnCustomEnd() {
-    FString Name = CharacterCustomizeUI->NameInputBox->GetText().ToString();
-    NewCharacterToServer(Name, Selected);
+    Selected.Name = CharacterCustomizeUI->NameInputBox->GetText().ToString();
+    NewCharacterToServer(Selected);
 }
 
 void ALobbyHandler::OnCustomCancel() {
@@ -375,45 +375,45 @@ FString ALobbyHandler::GetSalted(const FString& In) {
     return In + _T("_Unreal_Meta_Project_Account_Manager_Salt");
 }
 
-void ALobbyHandler::NextOutfit(int OutfitIndex) {
-    ++Selected.OutfitIndex[OutfitIndex];
-    if(Selected.OutfitIndex[OutfitIndex] >= OutfitItemCount[Selected.BodyIndex][OutfitIndex]) {
-        Selected.OutfitIndex[OutfitIndex] = 0;
+void ALobbyHandler::NextOutfit(int LookCode) {
+    ++Selected.LookCode[LookCode];
+    if(Selected.LookCode[LookCode] >= OutfitItemCount[Selected.BodyCode][LookCode]) {
+        Selected.LookCode[LookCode] = 0;
     }
-    Actor->SetOutfitMesh(OutfitIndex, GetSelectedOutfitMesh(OutfitIndex));
+    Actor->SetOutfitMesh(LookCode, GetSelectedOutfitMesh(LookCode));
 }
 
-void ALobbyHandler::PrevOutfit(int OutfitIndex) {
-    --Selected.OutfitIndex[OutfitIndex];
-    if(Selected.OutfitIndex[OutfitIndex] < 0) {
-        Selected.OutfitIndex[OutfitIndex] = OutfitItemCount[Selected.BodyIndex][OutfitIndex] - 1;
+void ALobbyHandler::PrevOutfit(int LookCode) {
+    --Selected.LookCode[LookCode];
+    if(Selected.LookCode[LookCode] < 0) {
+        Selected.LookCode[LookCode] = OutfitItemCount[Selected.BodyCode][LookCode] - 1;
     }
-    Actor->SetOutfitMesh(OutfitIndex, GetSelectedOutfitMesh(OutfitIndex));
+    Actor->SetOutfitMesh(LookCode, GetSelectedOutfitMesh(LookCode));
 }
 
 void ALobbyHandler::BodySelect(int In, bool bPreInit) {
-    Selected.BodyIndex = In;
+    Selected.BodyCode = In;
 
     // 바디 메시 로드
     Actor->SetBodyMesh(GetSelectedBodyMesh());
 
     // 의상 바디에 맞춰 초기화
-    for(int i = 0; i < EPO_OutfitCount; ++i) {
-        Selected.OutfitIndex[i] *= static_cast<int>(bPreInit); // false: 의상 초기화
+    for(int i = 0; i < EPL_Count; ++i) {
+        Selected.LookCode[i] *= static_cast<int>(bPreInit); // false: 의상 초기화
         Actor->SetOutfitMesh(i, GetSelectedOutfitMesh(i));
     }
 
     // Idle 모션 재생
-    Actor->PlayAnimation(UPlayerMeshManager::Instance(this)->Assets[Selected.BodyIndex].Anim[EPA_Idle]);
+    Actor->PlayAnimation(UPlayerMeshManager::Instance(this)->Assets[Selected.BodyCode].Anim[EPA_Idle]);
 }
 
 USkeletalMesh* ALobbyHandler::GetSelectedBodyMesh() const {
-    return UPlayerMeshManager::Instance(this)->Assets[Selected.BodyIndex].Body;
+    return UPlayerMeshManager::Instance(this)->Assets[Selected.BodyCode].Body;
 }
 
-USkeletalMesh* ALobbyHandler::GetSelectedOutfitMesh(int OutfitIndex) const {
-    const auto& Arr = UPlayerMeshManager::Instance(this)->Assets[Selected.BodyIndex].Outfit[OutfitIndex];
-    int         Idx = Selected.OutfitIndex[OutfitIndex];
+USkeletalMesh* ALobbyHandler::GetSelectedOutfitMesh(int LookCode) const {
+    const auto& Arr = UPlayerMeshManager::Instance(this)->Assets[Selected.BodyCode].Outfit[LookCode];
+    int         Idx = Selected.LookCode[LookCode];
     return Arr[Idx];
 }
 
@@ -424,39 +424,39 @@ void ALobbyHandler::SelectCharacterFromList(int32 Index) {
     // 범위 밖이면 nullptr로 세팅합니다.
     if (Index >= SelectMax || Index < 0) {
         Actor->SetBodyMesh(nullptr);
-        for (int i = 0; i < EPO_OutfitCount; ++i) {
+        for (int i = 0; i < EPL_Count; ++i) {
             Actor->SetOutfitMesh(i, nullptr);
         }
         Actor->PlayAnimation(nullptr);
         return;
     }
 
-    const TArray<UObject*>& Items = LobbyUI->PlayerCharacterList->GetListItems();
-    UPlayerListViewEntryData* Item = Cast<UPlayerListViewEntryData>(Items[Index]);
+    const TArray<UObject*>&   Items = LobbyUI->PlayerCharacterList->GetListItems();
+    UPlayerListViewEntryData* Item  = Cast<UPlayerListViewEntryData>(Items[Index]);
 
     // load
-    Selected.OutfitIndex[EPO_Face] = Item->FaceIndex;
-    Selected.OutfitIndex[EPO_Hair] = Item->HairIndex;
-    Selected.OutfitIndex[EPO_Upper] = Item->UpperIndex;
-    Selected.OutfitIndex[EPO_Lower] = Item->LowerIndex;
-    Selected.OutfitIndex[EPO_Shoes] = Item->ShoesIndex;
+    Selected.LookCode[EPL_Face]  = Item->FaceCode;
+    Selected.LookCode[EPL_Hair]  = Item->HairCode;
+    Selected.LookCode[EPL_Upper] = Item->UpperCode;
+    Selected.LookCode[EPL_Lower] = Item->LowerCode;
+    Selected.LookCode[EPL_Shoes] = Item->ShoesCode;
 
     // pre-init
-    BodySelect(Item->BodyIndex, true);
+    BodySelect(Item->BodyCode, true);
 }
 
-void ALobbyHandler::AddCharacterToList(const FString& Name, const FPlayerOutfit& MeshInfo) {
+void ALobbyHandler::AddCharacterToList(const FPlayerPreset& Preset) {
     check(UManager::IsUser(this));
 
     UPlayerListViewEntryData* Item = NewObject<UPlayerListViewEntryData>(this);
-    Item->Index = ++SelectMax;
-    Item->Name = Name;
-    Item->BodyIndex = MeshInfo.BodyIndex;
-    Item->HairIndex = MeshInfo.OutfitIndex[EPO_Hair];
-    Item->FaceIndex = MeshInfo.OutfitIndex[EPO_Face];
-    Item->UpperIndex = MeshInfo.OutfitIndex[EPO_Upper];
-    Item->LowerIndex = MeshInfo.OutfitIndex[EPO_Lower];
-    Item->ShoesIndex = MeshInfo.OutfitIndex[EPO_Shoes];
+    Item->Index     = ++SelectMax;
+    Item->Name      = Preset.Name;
+    Item->BodyCode =  Preset.BodyCode;
+    Item->HairCode =  Preset.LookCode[EPL_Hair];
+    Item->FaceCode =  Preset.LookCode[EPL_Face];
+    Item->UpperCode = Preset.LookCode[EPL_Upper];
+    Item->LowerCode = Preset.LookCode[EPL_Lower];
+    Item->ShoesCode = Preset.LookCode[EPL_Shoes];
     LobbyUI->PlayerCharacterList->AddItem(Item);
 }
 
@@ -471,16 +471,16 @@ void ALobbyHandler::LoadCharacterList(const FString& ID) {
         "SELECT * FROM player_tbl WHERE owner_id = ? ORDER BY created_at ASC",
         [ID](sql::PreparedStatement* In) { In->setString(1, TCHAR_TO_UTF8(*ID)); },
         [this](sql::ResultSet* In) {
-            TArray<FPlayerInfo> Params;
+            TArray<FPlayerPreset> Params;
             while (In->next()) {
-                FPlayerInfo Temp;
+                FPlayerPreset Temp;
                 Temp.Name = FString(In->getString("nickname").c_str());
-                Temp.MeshInfo.BodyIndex = In->getInt("body_type");
-                Temp.MeshInfo.OutfitIndex[EPO_Face] = In->getInt("face_type");
-                Temp.MeshInfo.OutfitIndex[EPO_Hair] = In->getInt("hair_type");
-                Temp.MeshInfo.OutfitIndex[EPO_Upper] = In->getInt("upper_type");
-                Temp.MeshInfo.OutfitIndex[EPO_Lower] = In->getInt("lower_type");
-                Temp.MeshInfo.OutfitIndex[EPO_Shoes] = In->getInt("shoes_type");
+                Temp.BodyCode = In->getInt("body_type");
+                Temp.LookCode[EPL_Face] = In->getInt("face_type");
+                Temp.LookCode[EPL_Hair] = In->getInt("hair_type");
+                Temp.LookCode[EPL_Upper] = In->getInt("upper_type");
+                Temp.LookCode[EPL_Lower] = In->getInt("lower_type");
+                Temp.LookCode[EPL_Shoes] = In->getInt("shoes_type");
                 Params.Add(Temp);
             }
             LoadCharactersResponse(Params);

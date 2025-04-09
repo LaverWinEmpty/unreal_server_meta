@@ -33,5 +33,5 @@ public:
 
 public:
 	USkeletalMeshComponent* Body;
-	USkeletalMeshComponent* Outfit[EPO_OutfitCount];
+	USkeletalMeshComponent* Outfit[EPL_Count];
 };

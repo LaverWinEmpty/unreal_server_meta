@@ -8,29 +8,29 @@ UPlayerMeshManager::UPlayerMeshManager() {}
 void UPlayerMeshManager::Setup() {
 	// nullptr allows list
 	static TSet<int> Nullable = {
-		EPO_Hair,
-		EPO_Upper,
-		EPO_Lower,
-		EPO_Shoes,
+		EPL_Hair,
+		EPL_Upper,
+		EPL_Lower,
+		EPL_Shoes,
 	};
 
 	static const FString AnimsPath  = _T("/Game/Creative_Characters_FREE/Animations/");
 	static const FString MeshesPath = _T("/Game/Creative_Characters_FREE/Skeleton_Meshes/");
 
 	// body name
-	static const FString BodyNames[EPB_BodyCount]{
+	static const FString BodyNames[EPB_Count]{
 		_T("SK_Body_010.SK_Body_010"),
 	};
 
 	// anim names
-	static const FString AnimNames[EPB_BodyCount][EPA_AnimCount]{
+	static const FString AnimNames[EPB_Count][EPA_Count]{
 		/* Body Type 1 */ {
 			_T("ANIM_Idle_Breathing.ANIM_Idle_Breathing"),
 		}
 	};
 
 	// mesh names
-	static const TArray<FString> MeshNames[EPB_BodyCount][EPO_OutfitCount] = {
+	static const TArray<FString> MeshNames[EPB_Count][EPL_Count] = {
 		/* Body Type 1 */ {
 			/* Face */ {
 				_T("SK_Male_emotion_usual_001.SK_Male_emotion_usual_001"),
@@ -94,11 +94,11 @@ void UPlayerMeshManager::Setup() {
 	};
 
 	// get assets
-	for (int i = 0; i < EPB_BodyCount; ++i) {
+	for (int i = 0; i < EPB_Count; ++i) {
 		Assets[i].Body = LoadBodyMesh(i);
 
 		// get mesh object
-		for (int j = 0; j < EPO_OutfitCount; ++j) {
+		for (int j = 0; j < EPL_Count; ++j) {
 			if (Nullable.Find(j)) {
 				Assets[i].Outfit[j].Add(nullptr); // nullable
 			}
@@ -111,22 +111,22 @@ void UPlayerMeshManager::Setup() {
 		}
 
 		// load anim object
-		for (int j = 0; j < EPA_AnimCount; ++j) {
+		for (int j = 0; j < EPA_Count; ++j) {
 			Assets[i].Anim[j] = LoadAnimation(i, j); // get
 		}
 	}
 
 	// check
-	for (int i = 0; i < EPB_BodyCount; ++i) {
+	for (int i = 0; i < EPB_Count; ++i) {
 		checkf(Assets[i].Body, _T("Load Failed: Body[%d]"), i);
 
-		for (int j = 0; j < EPO_OutfitCount; ++j) {
+		for (int j = 0; j < EPL_Count; ++j) {
 			if (!Nullable.Find(j)) {
 				checkf(MeshNames[i][j].Num(), _T("At least 1 asset is required.: Body[%d] Outfit[%d]"), i, j);
 			}
 		}
 
-		for (int j = 0; j < EPO_OutfitCount; ++j) {
+		for (int j = 0; j < EPL_Count; ++j) {
 			int Loop = Assets[i].Outfit[j].Num();
 			// [0] check nullable
 			if (Assets[i].Outfit[j][0] == nullptr && !Nullable.Find(j)) {
@@ -138,7 +138,7 @@ void UPlayerMeshManager::Setup() {
 			}
 		}
 
-		for (int j = 0; j < EPA_AnimCount; ++j) {
+		for (int j = 0; j < EPA_Count; ++j) {
 			checkf(Assets[i].Anim[j], _T("Load Failed: Body[%d] Animation[%d]"), i, j);
 		}
 	}
@@ -162,17 +162,17 @@ UAnimationAsset* UPlayerMeshManager::GetAnimation(int Type, int Index) const {
 }
 
 const TArray<USkeletalMesh*>& UPlayerMeshManager::GetFaceMeshs(int In) const {
-	return Assets[In].Outfit[EPO_Face];
+	return Assets[In].Outfit[EPL_Face];
 }
 
 const TArray<USkeletalMesh*>& UPlayerMeshManager::GetUpperMeshs(int In) const {
-	return Assets[In].Outfit[EPO_Upper];
+	return Assets[In].Outfit[EPL_Upper];
 }
 
 const TArray<USkeletalMesh*>& UPlayerMeshManager::GetLowerMeshs(int In) const {
-	return Assets[In].Outfit[EPO_Lower];
+	return Assets[In].Outfit[EPL_Lower];
 }
 
 const TArray<USkeletalMesh*>& UPlayerMeshManager::GetShoesMeshs(int In) const {
-	return Assets[In].Outfit[EPO_Shoes];
+	return Assets[In].Outfit[EPL_Shoes];
 }
