@@ -103,11 +103,10 @@ void ALobbyHandler::BeginClient() {
 
     // create actor
     Actor = GetWorld()->SpawnActor<ACustomizePreviewActor>(FVector{ 0 }, FRotator{ 0 });
-    check(Actor);
+    Viewer = GetWorld()->SpawnActor<ACameraActor>(FVector{ 0, 200, 90 }, FRotator{ 0, -90, 0 });
+    check(Actor && Viewer);
 
     // set camera
-    check(Viewer);
-    Viewer = GetWorld()->SpawnActor<ACameraActor>(FVector{ 0, 200, 90 }, FRotator{ 0, -90, 0 });
     Viewer->GetCameraComponent()->SetProjectionMode(ECameraProjectionMode::Orthographic);
     Viewer->GetCameraComponent()->SetOrthoWidth(500.0f);
     SetViewTarget(Viewer);
