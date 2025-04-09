@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Manager/Manager.h"
+#include "Data/ClientSession.h"
 #include "ClientSessionManager.generated.h"
 
 UCLASS()
@@ -16,15 +17,22 @@ public:
 	bool IsExist(const FString&);
 
 public:
-	TWeakObjectPtr<UNetConnection> GetUserSocket(const FString& ID);
-	FString                        GetUserID(APlayerController*);
+	void Enter(const APlayerController*, TSharedPtr<FClientSession>);
+	void Leave(const APlayerController*);
 
 public:
-	void OnLogIn(const APlayerController*, const FString&);
-	void OnLogOut(const APlayerController*);
-	void OnLogOut(const FString&);
+	template<typename... Args> static TSharedPtr<FClientSession> Create(Args&&...);
 
+public:
+	TSharedPtr<FClientSession>     GetClientSession(APlayerController*);
+	TWeakObjectPtr<UNetConnection> GetSokcet(const FString&);
+	
 private:
-	TMap<FString, TWeakObjectPtr<UNetConnection>> ClientSession;
-	TMap<TWeakObjectPtr<UNetConnection>, FString> ClientReference;
+	TMap<TWeakObjectPtr<UNetConnection>, TSharedPtr<FClientSession>> ClientSessionList;
+	TMap<FString, TWeakObjectPtr<UNetConnection>>                    ClientSocketList;
 };
+
+template<typename ...Args>
+inline TSharedPtr<FClientSession> UClientSessionManager::Create(Args&&... Param) {
+	return MakeShared<FClientSession>(Forward<Args>(Param)...);
+}

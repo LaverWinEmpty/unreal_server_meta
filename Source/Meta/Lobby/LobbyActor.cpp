@@ -38,7 +38,7 @@ void ALobbyActor::SetBodyMesh(USkeletalMesh* In) {
     Body->SetSkeletalMesh(In);
 }
 
-void ALobbyActor::SetOutfitMesh(int Index, USkeletalMesh* In) {
+void ALobbyActor::SetLookMesh(int Index, USkeletalMesh* In) {
     Outfit[Index]->SetSkeletalMesh(In);
 }
 

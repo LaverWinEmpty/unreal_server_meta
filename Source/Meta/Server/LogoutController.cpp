@@ -29,7 +29,7 @@ void ALogoutController::LogoutRequest_Implementation() {
 	}
 
 	// remove from client session manager
-	UClientSessionManager::Instance(this)->OnLogOut(this);
+	UClientSessionManager::Instance(this)->Leave(this);
 
 	// make 127.0.0.1:7777/LoginLevel
 	FString Param = UManager::GetServerAddress() + _T("/LoginLevel");

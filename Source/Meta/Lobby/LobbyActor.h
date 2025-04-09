@@ -28,7 +28,7 @@ public:
 
 public:
 	void SetBodyMesh(USkeletalMesh*);
-	void SetOutfitMesh(int EPO, USkeletalMesh*);
+	void SetLookMesh(int EPO, USkeletalMesh*);
 	void PlayAnimation(UAnimationAsset*);
 
 public:

@@ -6,7 +6,7 @@
 
 USTRUCT(BlueprintType)
 struct META_API FPlayerPreset {
-    GENERATED_USTRUCT_BODY();
+    GENERATED_BODY();
 
 public:
     UPROPERTY() int     BodyCode;

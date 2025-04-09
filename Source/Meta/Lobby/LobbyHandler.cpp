@@ -86,8 +86,6 @@ void ALobbyHandler::BeginClient() {
     MessageBoxUI->Bind(this);
     MessageBoxUI->SetVisibility(ESlateVisibility::Hidden); // default: hidden
 
-    EnterLoginModeResponse(); // begin
-
     // 에셋 개수 가져오기
     auto Manager = UPlayerMeshManager::Instance(this);
     for(int i = 0; i < EPB_Count; ++i) {
@@ -107,6 +105,8 @@ void ALobbyHandler::BeginClient() {
     Viewer->GetCameraComponent()->SetProjectionMode(ECameraProjectionMode::Orthographic);
     Viewer->GetCameraComponent()->SetOrthoWidth(500.0f);
     SetViewTarget(Viewer);
+
+    EnterLoginModeResponse(); // begin
 }
 
 void ALobbyHandler::BeginServer() {
@@ -165,7 +165,9 @@ void ALobbyHandler::LogInToServer_Implementation(const FString& ID, const FStrin
             if(In->next()) {
                 // insert
                 UManager::Dispatch([this, ID]() {
-                    UClientSessionManager::Instance(this)->OnLogIn(this, ID);
+                    UClientSessionManager::Instance(this)->Enter(this,
+                        UClientSessionManager::Create(ID)
+                    );
                 });
 
                 LoadCharacterList(ID);    // get list
@@ -176,8 +178,9 @@ void ALobbyHandler::LogInToServer_Implementation(const FString& ID, const FStrin
     ); // end Query
 }
 
-void ALobbyHandler::LogOutToServer_Implementation(const FString& ID) {
-    // TODO:
+void ALobbyHandler::LogOutToServer_Implementation() {
+    check(UManager::IsServer(this));
+    UClientSessionManager::Instance(this)->Leave(this);
 }
 
 void ALobbyHandler::SignUpToServer_Implementation(const FString& ID, const FString& PW) {
@@ -204,10 +207,10 @@ void ALobbyHandler::SignUpToServer_Implementation(const FString& ID, const FStri
                         In->setString(2, TCHAR_TO_UTF8(*HashedPW));
                     },
                     [this](sql::ResultSet*) {
-                        GetResultMessageToClient(ERC_CreatedID); // ok
+                        GetResultMessageResponse(ERC_CreatedID); // ok
                     }
                 ); // end Query
-            } else GetResultMessageToClient(ERC_DuplicatedD); // duplicated
+            } else GetResultMessageResponse(ERC_DuplicatedD); // duplicated
         } // end lambda
     ); // end Query
 }
@@ -219,8 +222,8 @@ void ALobbyHandler::SignOutToServer_Implementation(const FString& ID, const FStr
 void ALobbyHandler::NewCharacterToServer_Implementation(const FPlayerPreset& Preset) {
     check(UManager::IsServer(this));
 
-    // 플레이어 정보를 가져옵니다.
-    FString ID = UClientSessionManager::Instance(this)->GetUserID(this);
+    // DB에 등록하기 위해 플레이어 정보를 가져옵니다.
+    FString ID = UClientSessionManager::Instance(this)->GetClientSession(this)->ID;
 
     UDatabaseManager::Instance(this)->Query(
         "SELECT * FROM player_tbl WHERE nickname = ? LIMIT 1", // search 1
@@ -290,22 +293,30 @@ void ALobbyHandler::LoadCharactersToClient_Implementation(const TArray<FPlayerPr
     } // end else
 }
 
+
 void ALobbyHandler::EnterLoginModeToClient_Implementation() {
+    check(UManager::IsUser(this));
     LoginUI->SetVisibility(ESlateVisibility::Visible);
     LobbyUI->SetVisibility(ESlateVisibility::Hidden);
     CharacterCustomizeUI->SetVisibility(ESlateVisibility::Hidden);
+
+    Initialize();
 }
 
 void ALobbyHandler::EnterLobbyModeToClient_Implementation() {
+    check(UManager::IsUser(this));
     LoginUI->SetVisibility(ESlateVisibility::Hidden);
     LobbyUI->SetVisibility(ESlateVisibility::Visible);
     CharacterCustomizeUI->SetVisibility(ESlateVisibility::Hidden);
 }
 
 void ALobbyHandler::EnterCustomizeModeToClient_Implementation() {
+    check(UManager::IsUser(this));
     LoginUI->SetVisibility(ESlateVisibility::Hidden);
     LobbyUI->SetVisibility(ESlateVisibility::Hidden);
     CharacterCustomizeUI->SetVisibility(ESlateVisibility::Visible);
+
+    CharacterCustomizeUI->NameInputBox->SetText(FText::GetEmpty());
 }
 
 void ALobbyHandler::GetResultMessageToClient_Implementation(int8 Code) {
@@ -375,12 +386,23 @@ FString ALobbyHandler::GetSalted(const FString& In) {
     return In + _T("_Unreal_Meta_Project_Account_Manager_Salt");
 }
 
+void ALobbyHandler::Initialize() {
+    Actor->SetBodyMesh(nullptr);
+    for (int i = 0; i < EPL_Count; ++i) {
+        Actor->SetLookMesh(i, nullptr);
+    }
+
+    LoginUI->InputID->SetText(FText::GetEmpty());
+    LoginUI->InputPW->SetText(FText::GetEmpty());
+    LobbyUI->PlayerCharacterList->ClearListItems();
+}
+
 void ALobbyHandler::NextOutfit(int LookCode) {
     ++Selected.LookCode[LookCode];
     if(Selected.LookCode[LookCode] >= OutfitItemCount[Selected.BodyCode][LookCode]) {
         Selected.LookCode[LookCode] = 0;
     }
-    Actor->SetOutfitMesh(LookCode, GetSelectedOutfitMesh(LookCode));
+    Actor->SetLookMesh(LookCode, GetSelectedOutfitMesh(LookCode));
 }
 
 void ALobbyHandler::PrevOutfit(int LookCode) {
@@ -388,7 +410,7 @@ void ALobbyHandler::PrevOutfit(int LookCode) {
     if(Selected.LookCode[LookCode] < 0) {
         Selected.LookCode[LookCode] = OutfitItemCount[Selected.BodyCode][LookCode] - 1;
     }
-    Actor->SetOutfitMesh(LookCode, GetSelectedOutfitMesh(LookCode));
+    Actor->SetLookMesh(LookCode, GetSelectedOutfitMesh(LookCode));
 }
 
 void ALobbyHandler::BodySelect(int In, bool bPreInit) {
@@ -400,7 +422,7 @@ void ALobbyHandler::BodySelect(int In, bool bPreInit) {
     // 의상 바디에 맞춰 초기화
     for(int i = 0; i < EPL_Count; ++i) {
         Selected.LookCode[i] *= static_cast<int>(bPreInit); // false: 의상 초기화
-        Actor->SetOutfitMesh(i, GetSelectedOutfitMesh(i));
+        Actor->SetLookMesh(i, GetSelectedOutfitMesh(i));
     }
 
     // Idle 모션 재생
@@ -425,7 +447,7 @@ void ALobbyHandler::SelectCharacterFromList(int32 Index) {
     if (Index >= SelectMax || Index < 0) {
         Actor->SetBodyMesh(nullptr);
         for (int i = 0; i < EPL_Count; ++i) {
-            Actor->SetOutfitMesh(i, nullptr);
+            Actor->SetLookMesh(i, nullptr);
         }
         Actor->PlayAnimation(nullptr);
         return;
@@ -474,10 +496,10 @@ void ALobbyHandler::LoadCharacterList(const FString& ID) {
             TArray<FPlayerPreset> Params;
             while (In->next()) {
                 FPlayerPreset Temp;
-                Temp.Name = FString(In->getString("nickname").c_str());
-                Temp.BodyCode = In->getInt("body_type");
-                Temp.LookCode[EPL_Face] = In->getInt("face_type");
-                Temp.LookCode[EPL_Hair] = In->getInt("hair_type");
+                Temp.Name                = UTF8_TO_TCHAR(In->getString("nickname").c_str());
+                Temp.BodyCode            = In->getInt("body_type");
+                Temp.LookCode[EPL_Face]  = In->getInt("face_type");
+                Temp.LookCode[EPL_Hair]  = In->getInt("hair_type");
                 Temp.LookCode[EPL_Upper] = In->getInt("upper_type");
                 Temp.LookCode[EPL_Lower] = In->getInt("lower_type");
                 Temp.LookCode[EPL_Shoes] = In->getInt("shoes_type");
@@ -511,7 +533,8 @@ void ALobbyHandler::OnSignUp() {
 }
 
 void ALobbyHandler::OnLogOut() {
-    UE_LOG(LogTemp, Log, _T("Clicked"));
+    LogOutToServer();
+    EnterLoginModeResponse(); // return
 }
 
 void ALobbyHandler::OnSignOut() {

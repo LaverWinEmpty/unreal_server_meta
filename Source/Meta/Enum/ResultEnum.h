@@ -23,6 +23,7 @@ inline const TCHAR* GetResultMessage(int8 In) {
         case ERC_DuplicatedD:      return _T("이미 존재하는 계정입니다.");
         case ERC_CreatedCharacter: return _T("캐릭터가 생성되었습니다.");
         case ERC_DuplicatedName:   return _T("이미 존재하는 이름입니다.");
+        case ERC_InvalidName:      return _T("이름이 너무 깁니다.");
         default: return _T("UNKNOWN ERROR");
     }
 }

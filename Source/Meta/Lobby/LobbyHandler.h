@@ -50,6 +50,7 @@ public:
     static FString GetSalted(const FString&);
 
 public:
+    void           Initialize(); // UI init
     void           NextOutfit(int OutfitIndex);
     void           PrevOutfit(int OutfitIndex);
     void           BodySelect(int, bool = false); //!< false: outfit init, else keep
@@ -100,12 +101,12 @@ private:
 
 protected:
     UFUNCTION(Server, Reliable) void LogInToServer(const FString& ID, const FString& PW);
-    UFUNCTION(Server, Reliable) void LogOutToServer(const FString& ID);
+    UFUNCTION(Server, Reliable) void LogOutToServer();
     UFUNCTION(Server, Reliable) void SignUpToServer(const FString& ID, const FString& PW);
     UFUNCTION(Server, Reliable) void SignOutToServer(const FString& ID, const FString& PW);
 private:
     void LogInToServer_Implementation(const FString& ID, const FString& PW);
-    void LogOutToServer_Implementation(const FString& ID);
+    void LogOutToServer_Implementation();
     void SignUpToServer_Implementation(const FString& ID, const FString& PW);
     void SignOutToServer_Implementation(const FString& ID, const FString& PW);
 

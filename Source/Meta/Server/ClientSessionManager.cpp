@@ -2,45 +2,31 @@
 #include "Engine/NetConnection.h"
 #include "GameFramework/PlayerController.h"
 
-bool UClientSessionManager::IsExist(const FString& ID) {
-	return ClientSession.Find(ID) != nullptr;
-}
-
-TWeakObjectPtr<UNetConnection> UClientSessionManager::GetUserSocket(const FString& ID) {
-	return ClientSession[ID];
-}
-
-FString UClientSessionManager::GetUserID(APlayerController* In) {
-	TWeakObjectPtr<UNetConnection> Socket = In->GetNetConnection();
-	return FString(ClientReference[Socket]);
-}
-
-void UClientSessionManager::OnLogIn(const APlayerController* In, const FString& ID) {
+void UClientSessionManager::Enter(const APlayerController* PC, TSharedPtr<FClientSession> CS) {
 	check(UManager::IsServer(this));
-
-	UNetConnection* Socket = In->GetNetConnection();
+	UNetConnection* Socket = PC->GetNetConnection();
 	if (Socket == nullptr) {
 		if (!IsStandalone()) {
-			checkf(false, _T("OnLonIn(): NOT STANDALONE MODE BUT NOT CONNECTED"));
+			checkf(false, _T("Enter(): NOT STANDALONE MODE BUT NOT CONNECTED"));
 		}
 	}
-	ClientSession.Add(ID, Socket);
-	ClientReference.Add(Socket, ID);
+
+	ClientSessionList.Add(Socket, CS);
+	ClientSocketList.Add(CS->ID, Socket);
 }
 
-void UClientSessionManager::OnLogOut(const APlayerController* In) {
-	check(UManager::IsServer(this));
+void UClientSessionManager::Leave(const APlayerController* In) {
+	TWeakObjectPtr<UNetConnection> Socket        = In->GetNetConnection();
+	TSharedPtr<FClientSession>     ClientSession = ClientSessionList[Socket];
 
-	UNetConnection* Socket = In->GetNetConnection();
-	FString ID = ClientReference[Socket];
-	ClientSession.Remove(ID);
-	ClientReference.Remove(Socket);
+	ClientSocketList.Remove(ClientSession->ID);
+	ClientSessionList.Remove(Socket);
 }
 
-void UClientSessionManager::OnLogOut(const FString& ID) {
-	check(UManager::IsServer(this));
-	
-	TWeakObjectPtr<UNetConnection> Socket = ClientSession[ID];
-	ClientSession.Remove(ID);
-	ClientReference.Remove(Socket);
+TSharedPtr<FClientSession> UClientSessionManager::GetClientSession(APlayerController* PC) {
+	return ClientSessionList[PC->GetNetConnection()];
+}
+
+TWeakObjectPtr<UNetConnection> UClientSessionManager::GetSokcet(const FString& ID) {
+	return ClientSocketList[ID];
 }
