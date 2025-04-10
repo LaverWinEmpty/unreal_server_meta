@@ -508,6 +508,8 @@ USkeletalMesh* ALobbyHandler::GetSelectedLookMesh(int LookCode) const {
 
 // 0 ~ Max - 1
 void ALobbyHandler::SelectCharacterFromList(int32 Index) {
+    check(UManager::IsUser(this));
+
     SelectIndex = Index; // Save
 
     // 범위 밖이면 nullptr로 세팅합니다.
