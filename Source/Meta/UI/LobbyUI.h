@@ -10,6 +10,7 @@ class UButton;
 class UTextBlock;
 class UListView;
 class ALobbyHandler;
+class UImage;
 
 UCLASS()
 class META_API ULobbyUI : public UUserWidget
@@ -40,4 +41,8 @@ public:
 
 	//UPROPERTY(meta = (BindWidget))
 	//UListView* Rooms;
+
+	// unused
+	UPROPERTY(meta = (BindWidget))
+	UImage* PreviewImage;
 };

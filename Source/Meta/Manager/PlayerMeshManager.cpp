@@ -100,13 +100,13 @@ void UPlayerMeshManager::Setup() {
 		// get mesh object
 		for (int j = 0; j < EPL_Count; ++j) {
 			if (Nullable.Find(j)) {
-				Assets[i].Outfit[j].Add(nullptr); // nullable
+				Assets[i].LookMesh[j].Add(nullptr); // nullable
 			}
 
 			// load
 			int Loop = MeshNames[i][j].Num();
 			for (int k = 0; k < Loop; ++k) {
-				Assets[i].Outfit[j].Add(LoadOutfitMesh(i, j, k)); // get
+				Assets[i].LookMesh[j].Add(LoadOutfitMesh(i, j, k)); // get
 			}
 		}
 
@@ -127,14 +127,14 @@ void UPlayerMeshManager::Setup() {
 		}
 
 		for (int j = 0; j < EPL_Count; ++j) {
-			int Loop = Assets[i].Outfit[j].Num();
+			int Loop = Assets[i].LookMesh[j].Num();
 			// [0] check nullable
-			if (Assets[i].Outfit[j][0] == nullptr && !Nullable.Find(j)) {
+			if (Assets[i].LookMesh[j][0] == nullptr && !Nullable.Find(j)) {
 				checkf(false, _T("Load Failed: Check Nullable -> Body[%d] Outfit[%d] Number[0]"), i, j);
 			}
 			// others
 			for (int k = 1; k < Loop; ++k) {
-				checkf(Assets[i].Outfit[j][k], _T("Load Failed: Body[%d] Outfit[%d] Number[%d]"), i, j, k);
+				checkf(Assets[i].LookMesh[j][k], _T("Load Failed: Body[%d] Outfit[%d] Number[%d]"), i, j, k);
 			}
 		}
 
@@ -154,7 +154,7 @@ USkeletalMesh* UPlayerMeshManager::GetBodyMesh(int Type) const {
 }
 
 USkeletalMesh* UPlayerMeshManager::GetOutfitMesh(int Type, int Part, int Index) const {
-	return Assets[Type].Outfit[Part][Index];
+	return Assets[Type].LookMesh[Part][Index];
 }
 
 UAnimationAsset* UPlayerMeshManager::GetAnimation(int Type, int Index) const {
@@ -162,17 +162,17 @@ UAnimationAsset* UPlayerMeshManager::GetAnimation(int Type, int Index) const {
 }
 
 const TArray<USkeletalMesh*>& UPlayerMeshManager::GetFaceMeshs(int In) const {
-	return Assets[In].Outfit[EPL_Face];
+	return Assets[In].LookMesh[EPL_Face];
 }
 
 const TArray<USkeletalMesh*>& UPlayerMeshManager::GetUpperMeshs(int In) const {
-	return Assets[In].Outfit[EPL_Upper];
+	return Assets[In].LookMesh[EPL_Upper];
 }
 
 const TArray<USkeletalMesh*>& UPlayerMeshManager::GetLowerMeshs(int In) const {
-	return Assets[In].Outfit[EPL_Lower];
+	return Assets[In].LookMesh[EPL_Lower];
 }
 
 const TArray<USkeletalMesh*>& UPlayerMeshManager::GetShoesMeshs(int In) const {
-	return Assets[In].Outfit[EPL_Shoes];
+	return Assets[In].LookMesh[EPL_Shoes];
 }

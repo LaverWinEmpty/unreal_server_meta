@@ -9,6 +9,7 @@
 class UButton;
 class UEditableText;
 class ALobbyHandler;
+class UImage;
 
 UCLASS()
 class META_API UCharacterCustomizeUI : public UUserWidget
@@ -31,6 +32,10 @@ public:
 	UPROPERTY(meta = (BindWidget)) UButton* ShoesPrevButton;
 	UPROPERTY(meta = (BindWidget)) UButton* EnterButton;
 	UPROPERTY(meta = (BindWidget)) UButton* ExitButton;
+
+	// unused
+	UPROPERTY(meta = (BindWidget))
+	UImage* PreviewImage;
 
 public:
 	UPROPERTY(meta = (BindWidget)) UEditableText* NameInputBox;

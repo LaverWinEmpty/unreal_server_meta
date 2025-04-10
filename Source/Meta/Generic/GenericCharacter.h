@@ -17,7 +17,7 @@ public:
 
 public:
     USkeletalMeshComponent* Body;
-    USkeletalMeshComponent* Outfit[EPL_Count];
+    USkeletalMeshComponent* LookMesh[EPL_Count];
 
 protected:
     virtual void BeginPlay() override;

@@ -32,6 +32,6 @@ public:
 	void PlayAnimation(UAnimationAsset*);
 
 public:
-	USkeletalMeshComponent* Body;
-	USkeletalMeshComponent* Outfit[EPL_Count];
+	USkeletalMeshComponent*   BodyMesh;
+	USkeletalMeshComponent*   LookMesh[EPL_Count];
 };

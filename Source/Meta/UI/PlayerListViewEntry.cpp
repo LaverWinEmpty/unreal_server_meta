@@ -5,7 +5,6 @@
 #include "UI/PlayerListViewEntryData.h"
 #include "Components/TextBlock.h"
 #include "Components/Button.h"
-// #include "Client/LobbyController.h"
 #include "Lobby/LobbyHandler.h"
 #include "LobbyUI.h"
 

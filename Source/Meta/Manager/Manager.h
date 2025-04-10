@@ -11,7 +11,7 @@
  * Manager Base Class with Utilities
  *********************************************************************************************************************/
 
-#define TODO() checkf(false, _T("TODO"));
+#define TODO(text) checkf(false, _T("TODO: %s"), _T(##text));
 
 #define DECLARE_MANAGER_GET_INSTANCE(TYPE)\
     static TYPE* Instance(const UObject* Context) { return UManager::Instance<TYPE>(Context); }

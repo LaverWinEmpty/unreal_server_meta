@@ -111,12 +111,12 @@ private:
     void SignOutToServer_Implementation(const FString& ID, const FString& PW);
 
 public:
-    UFUNCTION(Server, Reliable) void NewCharacterToServer(const FPlayerPreset& Outfit);
-    UFUNCTION(Client, Reliable) void NewCharacterToClient(const FPlayerPreset& Outfit);
+    UFUNCTION(Server, Reliable) void NewCharacterToServer(const FPlayerPreset& LookMesh);
+    UFUNCTION(Client, Reliable) void NewCharacterToClient(const FPlayerPreset& LookMesh);
     UFUNCTION(Client, Reliable) void LoadCharactersToClient(const TArray<FPlayerPreset>& Param);
 private:
-    void NewCharacterToServer_Implementation(const FPlayerPreset& Outfit);
-    void NewCharacterToClient_Implementation(const FPlayerPreset& Outfit);
+    void NewCharacterToServer_Implementation(const FPlayerPreset& LookMesh);
+    void NewCharacterToClient_Implementation(const FPlayerPreset& LookMesh);
     void LoadCharactersToClient_Implementation(const TArray<FPlayerPreset>& Param);
 
 public:

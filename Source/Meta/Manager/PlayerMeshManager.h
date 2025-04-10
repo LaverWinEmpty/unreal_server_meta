@@ -36,7 +36,7 @@ public:
 public:
 	struct FAsset {
 		USkeletalMesh*         Body;
-		TArray<USkeletalMesh*> Outfit[EPL_Count];
+		TArray<USkeletalMesh*> LookMesh[EPL_Count];
 		UAnimationAsset*       Anim[EPA_Count];
 	};
 	FAsset Assets[EPB_Count];

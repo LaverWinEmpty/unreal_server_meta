@@ -90,7 +90,7 @@ void ALobbyHandler::BeginClient() {
     auto Manager = UPlayerMeshManager::Instance(this);
     for(int i = 0; i < EPB_Count; ++i) {
         for(int j = 0; j < EPL_Count; ++j) {
-            OutfitItemCount[i][j] = Manager->Assets[i].Outfit[j].Num();
+            OutfitItemCount[i][j] = Manager->Assets[i].LookMesh[j].Num();
         }
     }
 
@@ -299,7 +299,6 @@ void ALobbyHandler::EnterLoginModeToClient_Implementation() {
     LoginUI->SetVisibility(ESlateVisibility::Visible);
     LobbyUI->SetVisibility(ESlateVisibility::Hidden);
     CharacterCustomizeUI->SetVisibility(ESlateVisibility::Hidden);
-
     Initialize();
 }
 
@@ -308,6 +307,7 @@ void ALobbyHandler::EnterLobbyModeToClient_Implementation() {
     LoginUI->SetVisibility(ESlateVisibility::Hidden);
     LobbyUI->SetVisibility(ESlateVisibility::Visible);
     CharacterCustomizeUI->SetVisibility(ESlateVisibility::Hidden);
+    SelectCharacterFromList(0); // get first
 }
 
 void ALobbyHandler::EnterCustomizeModeToClient_Implementation() {
@@ -317,6 +317,7 @@ void ALobbyHandler::EnterCustomizeModeToClient_Implementation() {
     CharacterCustomizeUI->SetVisibility(ESlateVisibility::Visible);
 
     CharacterCustomizeUI->NameInputBox->SetText(FText::GetEmpty());
+    BodySelect(0); // set initial body and looks
 }
 
 void ALobbyHandler::GetResultMessageToClient_Implementation(int8 Code) {
@@ -339,8 +340,8 @@ void ALobbyHandler::OnBodyPrev() {
 }
 
 void ALobbyHandler::OnCustomBegin() {
+    check(UManager::IsUser(this));
     EnterCustomizeModeResponse();
-    BodySelect(0); // init body
 }
 
 void ALobbyHandler::OnCustomEnd() {
@@ -387,14 +388,15 @@ FString ALobbyHandler::GetSalted(const FString& In) {
 }
 
 void ALobbyHandler::Initialize() {
+    LoginUI->InputID->SetText(FText::GetEmpty());
+    LoginUI->InputPW->SetText(FText::GetEmpty());
+    LobbyUI->PlayerCharacterList->ClearListItems();
+
+    // hide
     Actor->SetBodyMesh(nullptr);
     for (int i = 0; i < EPL_Count; ++i) {
         Actor->SetLookMesh(i, nullptr);
     }
-
-    LoginUI->InputID->SetText(FText::GetEmpty());
-    LoginUI->InputPW->SetText(FText::GetEmpty());
-    LobbyUI->PlayerCharacterList->ClearListItems();
 }
 
 void ALobbyHandler::NextOutfit(int LookCode) {
@@ -434,7 +436,7 @@ USkeletalMesh* ALobbyHandler::GetSelectedBodyMesh() const {
 }
 
 USkeletalMesh* ALobbyHandler::GetSelectedOutfitMesh(int LookCode) const {
-    const auto& Arr = UPlayerMeshManager::Instance(this)->Assets[Selected.BodyCode].Outfit[LookCode];
+    const auto& Arr = UPlayerMeshManager::Instance(this)->Assets[Selected.BodyCode].LookMesh[LookCode];
     int         Idx = Selected.LookCode[LookCode];
     return Arr[Idx];
 }

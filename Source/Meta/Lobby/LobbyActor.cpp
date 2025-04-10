@@ -2,9 +2,12 @@
 
 
 #include "Lobby/LobbyActor.h"
+#include "Engine/TextureRenderTarget2D.h"
 #include "Components/SkeletalMeshComponent.h"
-#include "Manager/PlayerMeshManager.h"
+#include "Components/SceneCaptureComponent2D.h"
+#include "Components/Image.h"
 #include "Animation/AnimInstance.h"
+#include "Manager/PlayerMeshManager.h"
 
 ALobbyActor::ALobbyActor() {
 	// 클라이언트에서 사용
@@ -12,16 +15,18 @@ ALobbyActor::ALobbyActor() {
 	PrimaryActorTick.bCanEverTick = true;
 
     // Set Component
-    Body = CreateDefaultSubobject<USkeletalMeshComponent>(_T("Body"));
+    BodyMesh = CreateDefaultSubobject<USkeletalMeshComponent>(_T("BodyMesh"));
+    check(BodyMesh);
     for (int i = 0; i < EPL_Count; ++i) {
-        Outfit[i] = CreateDefaultSubobject<USkeletalMeshComponent>(*FString::Printf(_T("Outfit_%d"), i));
+        LookMesh[i] = CreateDefaultSubobject<USkeletalMeshComponent>(*FString::Printf(_T("LookMesh_%d"), i));
+        check(LookMesh[i]);
     }
     
     // Set hierarchy for same animation
-    RootComponent = Body;
+    RootComponent = BodyMesh;
     for (int i = 0; i < EPL_Count; ++i) {
-        Outfit[i]->SetupAttachment(Body);
-        Outfit[i]->SetLeaderPoseComponent(Body, true);
+        LookMesh[i]->SetupAttachment(BodyMesh);
+        LookMesh[i]->SetLeaderPoseComponent(BodyMesh, true);
     }
 }
 
@@ -35,13 +40,13 @@ void ALobbyActor::Tick(float DeltaTime) {
 }
 
 void ALobbyActor::SetBodyMesh(USkeletalMesh* In) {
-    Body->SetSkeletalMesh(In);
+    BodyMesh->SetSkeletalMesh(In);
 }
 
 void ALobbyActor::SetLookMesh(int Index, USkeletalMesh* In) {
-    Outfit[Index]->SetSkeletalMesh(In);
+    LookMesh[Index]->SetSkeletalMesh(In);
 }
 
 void ALobbyActor::PlayAnimation(UAnimationAsset* In) {
-    Body->PlayAnimation(In, true);
+    BodyMesh->PlayAnimation(In, true);
 }
