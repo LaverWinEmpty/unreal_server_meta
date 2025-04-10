@@ -1,25 +1,44 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
-
 #include "CoreMinimal.h"
-// #include "GameFramework/PlayerController.h"
+#include "Enum/InputEnum.h"
+#include "GameFramework/PlayerController.h"
 #include "Server/LogoutController.h"
 #include "GenericController.generated.h"
 
-/*********************************************************************************************************************
- * @brief 범용 컨트롤러입니다, 서버 클라이언트 모두 사용
- *********************************************************************************************************************/
+struct FEnhancedActionKeyMapping;
+class UInputMappingContext;
+class UInputAction;
+
+/**************************************************************************************************
+ * @brief 범용 컨트롤러
+ **************************************************************************************************/
 UCLASS()
-class META_API AGenericController: public ALogoutController {
+class META_API AGenericController: public APlayerController {
     GENERATED_BODY()
+
+private:
+	template<typename Arg, typename... Args> void PostMapping(FEnhancedActionKeyMapping* Out);
+
+public:
+	//! @tparam UInputModifier, UInputTrigger
+	template<typename Arg, typename... Args> void Mapping(int InputActionID, const FKey Key);
+	//! @tparam UInputModifier, UInputTrigger
+	void Mapping(int InputActionID, const FKey Key);
 
 public:
     AGenericController();
 
 public:
+	void OnPossess(APawn*) override;
     void BeginPlay() override;
 
 public:
+	void SetUpKeyMapping();
+
+public:
     // void PostLogout(int8 Type, int8 Result); // response
+
+public:
+	TObjectPtr<UInputMappingContext> IMC;
+	TArray<TObjectPtr<UInputAction>> IA;
 };
