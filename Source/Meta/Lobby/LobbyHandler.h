@@ -37,28 +37,23 @@ public:
     void BeginServer();
 
 public:
-    // RPC response wrapping
-    void EnterLobbyModeResponse();
-    void EnterLoginModeResponse();
-    void EnterCustomizeModeResponse();
-    void GetResultMessageResponse(int8);
-    void NewCharacterResponse(const FPlayerPreset&);
-    void LoadCharactersResponse(const TArray<FPlayerPreset>&);
-
-public:
     static FString PasswordSHA256(const FString&);
     static FString GetSalted(const FString&);
 
 public:
-    void           Initialize(); // UI init
-    void           NextOutfit(int OutfitIndex);
-    void           PrevOutfit(int OutfitIndex);
-    void           BodySelect(int, bool = false); //!< false: outfit init, else keep
-    USkeletalMesh* GetSelectedBodyMesh() const;
-    USkeletalMesh* GetSelectedOutfitMesh(int) const;
-    void           AddCharacterToList(const FPlayerPreset&);
-    void           SelectCharacterFromList(int32);
-    void           LoadCharacterList(const FString& ID);
+    void Initialize();                           //!< UI init in client
+    void NextLook(int LookType);                 //!< select next look
+    void PrevLook(int LookType);                 //!< select prev look
+    void BodySelect(int BodyType, bool = false); //!< select body in client, true: keep selected look index
+    void SelectCharacterFromList(int32 Index);   //!< select character in client
+
+public:
+    USkeletalMesh* GetSelectedBodyMesh() const;    //!< get selected body mesh in client
+    USkeletalMesh* GetSelectedLookMesh(int) const; //!< get selected look mesh in client
+
+protected:
+    void PostNewCharacter(const FPlayerPreset&); //!< On new character succeeded in client
+    void PostLogIn(const FString& ID);           //!< On log-in succedded in server
 
 public:
     UFUNCTION() void OnLogIn();   //!< Login UI LogInButton
@@ -69,16 +64,16 @@ public:
 public:
     UFUNCTION() void OnBodyNext();                            //!< Character Customize UI Body NextButton
     UFUNCTION() void OnBodyPrev();                            //!< Character Customize UI Body PrevButton
-    UFUNCTION() void OnFaceNext() { NextOutfit(EPL_Face); }   //!< Character Customize UI Face NextButton
-    UFUNCTION() void OnFacePrev() { PrevOutfit(EPL_Face); }   //!< Character Customize UI Face PrevButton
-    UFUNCTION() void OnHairNext() { NextOutfit(EPL_Hair); }   //!< Character Customize UI Hair NextButton
-    UFUNCTION() void OnHairPrev() { PrevOutfit(EPL_Hair); }   //!< Character Customize UI Hair PrevButton
-    UFUNCTION() void OnUpperNext() { NextOutfit(EPL_Upper); } //!< Character Customize UI Upper NextButton
-    UFUNCTION() void OnUpperPrev() { PrevOutfit(EPL_Upper); } //!< Character Customize UI Upper PrevButton
-    UFUNCTION() void OnLowerNext() { NextOutfit(EPL_Lower); } //!< Character Customize UI Lower NextButton
-    UFUNCTION() void OnLowerPrev() { PrevOutfit(EPL_Lower); } //!< Character Customize UI Lower PrevButton
-    UFUNCTION() void OnShoesNext() { NextOutfit(EPL_Shoes); } //!< Character Customize UI Shoes NextButton
-    UFUNCTION() void OnShoesPrev() { PrevOutfit(EPL_Shoes); } //!< Character Customize UI Shoes PrevButton
+    UFUNCTION() void OnFaceNext() { NextLook(EPL_Face); }   //!< Character Customize UI Face NextButton
+    UFUNCTION() void OnFacePrev() { PrevLook(EPL_Face); }   //!< Character Customize UI Face PrevButton
+    UFUNCTION() void OnHairNext() { NextLook(EPL_Hair); }   //!< Character Customize UI Hair NextButton
+    UFUNCTION() void OnHairPrev() { PrevLook(EPL_Hair); }   //!< Character Customize UI Hair PrevButton
+    UFUNCTION() void OnUpperNext() { NextLook(EPL_Upper); } //!< Character Customize UI Upper NextButton
+    UFUNCTION() void OnUpperPrev() { PrevLook(EPL_Upper); } //!< Character Customize UI Upper PrevButton
+    UFUNCTION() void OnLowerNext() { NextLook(EPL_Lower); } //!< Character Customize UI Lower NextButton
+    UFUNCTION() void OnLowerPrev() { PrevLook(EPL_Lower); } //!< Character Customize UI Lower PrevButton
+    UFUNCTION() void OnShoesNext() { NextLook(EPL_Shoes); } //!< Character Customize UI Shoes NextButton
+    UFUNCTION() void OnShoesPrev() { PrevLook(EPL_Shoes); } //!< Character Customize UI Shoes PrevButton
 
 public:
     UFUNCTION() void OnCustomBegin();  //!< Character Customize UI CustomBegin
@@ -90,39 +85,84 @@ public:
     UFUNCTION() void ShowMessageBox();
     UFUNCTION() void HideMessageBox();
 
-public:
-    UFUNCTION(Client, Reliable) void EnterLoginModeToClient();
-    UFUNCTION(Client, Reliable) void EnterLobbyModeToClient();
-    UFUNCTION(Client, Reliable) void EnterCustomizeModeToClient();
-private:
+protected:
+    UFUNCTION(Client, Reliable)
+    void EnterLoginModeToClient();
     void EnterLoginModeToClient_Implementation();
-    void EnterLobbyModeToClient_Implementation();
-    void EnterCustomizeModeToClient_Implementation();
+public:
+    void EnterLoginModeResponse();
 
 protected:
-    UFUNCTION(Server, Reliable) void LogInToServer(const FString& ID, const FString& PW);
-    UFUNCTION(Server, Reliable) void LogOutToServer();
-    UFUNCTION(Server, Reliable) void SignUpToServer(const FString& ID, const FString& PW);
-    UFUNCTION(Server, Reliable) void SignOutToServer(const FString& ID, const FString& PW);
-private:
+    UFUNCTION(Client, Reliable)
+    void EnterLobbyModeToClient();
+    void EnterLobbyModeToClient_Implementation();
+public:
+    void EnterLobbyModeResponse();
+
+protected:
+    UFUNCTION(Client, Reliable)
+    void EnterCustomizeModeToClient();
+    void EnterCustomizeModeToClient_Implementation();
+public:
+    void EnterCustomizeModeResponse();
+
+protected:
+    UFUNCTION(Server, Reliable)
+    void LogInToServer(const FString& ID, const FString& PW);
     void LogInToServer_Implementation(const FString& ID, const FString& PW);
+public:
+    void LogInRequest(const FString& ID, const FString& PW);
+
+protected:
+    UFUNCTION(Server, Reliable)
+    void LogOutToServer();
     void LogOutToServer_Implementation();
+public:
+    void LogOutRequest();
+
+protected:
+    UFUNCTION(Server, Reliable, WithValidation)
+    void SignUpToServer(const FString& ID, const FString& PW);
     void SignUpToServer_Implementation(const FString& ID, const FString& PW);
+    bool SignUpToServer_Validate(const FString& ID, const FString& PW);
+public:
+    void SignUpRequest(const FString& ID, const FString& PW);
+
+protected:
+    UFUNCTION(Server, Reliable)
+    void SignOutToServer(const FString& ID, const FString& PW);
     void SignOutToServer_Implementation(const FString& ID, const FString& PW);
-
 public:
-    UFUNCTION(Server, Reliable) void NewCharacterToServer(const FPlayerPreset& LookMesh);
-    UFUNCTION(Client, Reliable) void NewCharacterToClient(const FPlayerPreset& LookMesh);
-    UFUNCTION(Client, Reliable) void LoadCharactersToClient(const TArray<FPlayerPreset>& Param);
-private:
-    void NewCharacterToServer_Implementation(const FPlayerPreset& LookMesh);
-    void NewCharacterToClient_Implementation(const FPlayerPreset& LookMesh);
+    void SignOutRequest(const FString& ID, const FString& PW);
+
+protected:
+    UFUNCTION(Server, Reliable, WithValidation)
+    void NewCharacterToServer(const FPlayerPreset& Param);
+    void NewCharacterToServer_Implementation(const FPlayerPreset& Param);
+    bool NewCharacterToServer_Validate(const FPlayerPreset& Prama);
+public:
+    void NewCharacterRequest(const FPlayerPreset& Param);
+
+protected:
+    UFUNCTION(Client, Reliable)
+    void NewCharacterToClient(const FPlayerPreset& Param);
+    void NewCharacterToClient_Implementation(const FPlayerPreset& Param);
+public:
+    void NewCharacterResponse(const FPlayerPreset& Param);
+
+protected:
+    UFUNCTION(Client, Reliable)
+    void LoadCharactersToClient(const TArray<FPlayerPreset>& Param);
     void LoadCharactersToClient_Implementation(const TArray<FPlayerPreset>& Param);
-
 public:
-    UFUNCTION(Client, Reliable)void GetResultMessageToClient(int8 Code);
-private:
-    void GetResultMessageToClient_Implementation(int8 Code);
+    void LoadCharactersResponse(const TArray<FPlayerPreset>& Param);
+
+protected:
+    UFUNCTION(Client, Reliable)
+    void PrintResultMessageToClient(int8 Code);
+    void PrintResultMessageToClient_Implementation(int8 Code);
+public:
+    void PrintResultMessageResponse(int8);
 
 public:
     ULoginUI*              LoginUI;
@@ -136,7 +176,7 @@ private:
     int32         SelectMax   = 0;     //!< 캐릭터 선택 가능 수
 
 private:
-    int OutfitItemCount[EPB_Count][EPL_Count] = { 0 }; //!< 각 Body의 Outfit별 아이템 가짓수
+    int LookKinds[EPB_Count][EPL_Count] = { 0 }; //!< 각 Body의 Outfit별 아이템 가짓수
 
 private:
     ALobbyActor*  Actor;

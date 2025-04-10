@@ -90,7 +90,7 @@ void ALobbyHandler::BeginClient() {
     auto Manager = UPlayerMeshManager::Instance(this);
     for(int i = 0; i < EPB_Count; ++i) {
         for(int j = 0; j < EPL_Count; ++j) {
-            OutfitItemCount[i][j] = Manager->Assets[i].LookMesh[j].Num();
+            LookKinds[i][j] = Manager->Assets[i].LookMesh[j].Num();
         }
     }
 
@@ -115,37 +115,37 @@ void ALobbyHandler::BeginServer() {
 
 void ALobbyHandler::EnterLobbyModeResponse() {
     UManager::Dispatch([this]() {
-        RESPONSE(EnterLobbyModeToClient);
+        EnterLobbyModeToClient();
     });
 }
 
 void ALobbyHandler::EnterLoginModeResponse() {
     UManager::Dispatch([this]() {
-        RESPONSE(EnterLoginModeToClient);
+        EnterLoginModeToClient();
     });
 }
 
 void ALobbyHandler::EnterCustomizeModeResponse() {
     UManager::Dispatch([this]() {
-        RESPONSE(EnterCustomizeModeToClient);
+        EnterCustomizeModeToClient();
     });
 }
 
-void ALobbyHandler::GetResultMessageResponse(int8 Code) {
+void ALobbyHandler::PrintResultMessageResponse(int8 Code) {
     UManager::Dispatch([this, Code]() {
-        RESPONSE(GetResultMessageToClient, Code);
+        PrintResultMessageToClient(Code);
     });
 }
 
 void ALobbyHandler::NewCharacterResponse(const FPlayerPreset& Preset) {
     UManager::Dispatch([this, Preset] {
-        RESPONSE(NewCharacterToClient, Preset);
+        NewCharacterToClient(Preset);
     });
 }
 
 void ALobbyHandler::LoadCharactersResponse(const TArray<FPlayerPreset>& Params) {
     UManager::Dispatch([this, Params] {
-        RESPONSE(LoadCharactersToClient, Params);
+        LoadCharactersToClient(Params);
     });
 }
 
@@ -170,17 +170,28 @@ void ALobbyHandler::LogInToServer_Implementation(const FString& ID, const FStrin
                     );
                 });
 
-                LoadCharacterList(ID);    // get list
-                EnterLobbyModeResponse(); // move
+                PostLogIn(ID); // get list -> response when end query
             }
-            else GetResultMessageResponse(ERC_InvalidID); // print message
+            else PrintResultMessageResponse(ERC_UnknownID); // print message
         } // end lambda
     ); // end Query
+}
+
+void ALobbyHandler::LogInRequest(const FString& ID, const FString& PW) {
+    UManager::Dispatch([this, ID, PW] {
+        LogInToServer(ID, PW);
+    });
 }
 
 void ALobbyHandler::LogOutToServer_Implementation() {
     check(UManager::IsServer(this));
     UClientSessionManager::Instance(this)->Leave(this);
+}
+
+void ALobbyHandler::LogOutRequest() {
+    UManager::Dispatch([this] {
+        LogOutToServer();
+    });
 }
 
 void ALobbyHandler::SignUpToServer_Implementation(const FString& ID, const FString& PW) {
@@ -207,16 +218,40 @@ void ALobbyHandler::SignUpToServer_Implementation(const FString& ID, const FStri
                         In->setString(2, TCHAR_TO_UTF8(*HashedPW));
                     },
                     [this](sql::ResultSet*) {
-                        GetResultMessageResponse(ERC_CreatedID); // ok
+                        PrintResultMessageResponse(ERC_CreatedAccount); // ok
                     }
                 ); // end Query
-            } else GetResultMessageResponse(ERC_DuplicatedD); // duplicated
+            } else PrintResultMessageResponse(ERC_DuplicatedD); // duplicated
         } // end lambda
     ); // end Query
 }
 
+bool ALobbyHandler::SignUpToServer_Validate(const FString& ID, const FString& PW) {
+    if (ID.Len() < 3 || ID.Len() > 16) {
+        PrintResultMessageResponse(ERC_InvalidID); // invalid id
+        return false;
+    }
+    if (PW.Len() < 3) {
+        PrintResultMessageResponse(ERC_InvalidPW); // invalid pw
+        return false;
+    }
+    return true;
+}
+
+void ALobbyHandler::SignUpRequest(const FString& ID, const FString& PW) {
+    UManager::Dispatch([this, ID, PW](){
+        SignUpToServer(ID, PW);
+    });
+}
+
 void ALobbyHandler::SignOutToServer_Implementation(const FString& ID, const FString& PW) {
     // TODO:
+}
+
+void ALobbyHandler::SignOutRequest(const FString& ID, const FString& PW) {
+    UManager::Dispatch([this, ID, PW] {
+        SignOutToServer(ID, PW);
+    });
 }
 
 void ALobbyHandler::NewCharacterToServer_Implementation(const FPlayerPreset& Preset) {
@@ -256,22 +291,36 @@ void ALobbyHandler::NewCharacterToServer_Implementation(const FPlayerPreset& Pre
                         In->setInt(8, Preset.LookCode[EPL_Shoes]);
                     },
                     [this, Preset](sql::ResultSet*) {
-                        GetResultMessageResponse(ERC_CreatedCharacter); // ok
+                        PrintResultMessageResponse(ERC_CreatedCharacter); // ok
                         NewCharacterResponse(Preset);
                     }
                 );
             }
             else {
-                GetResultMessageResponse(ERC_DuplicatedName); // duplicated
+                PrintResultMessageResponse(ERC_DuplicatedName); // duplicated
             }
         } // end process
     ); // end query
 }
 
+bool ALobbyHandler::NewCharacterToServer_Validate(const FPlayerPreset& Param) {
+    if (Param.Name.IsEmpty() || Param.Name.Len() > 8) {
+        PrintResultMessageResponse(ERC_InvalidName); // invalid name
+        return false;
+    }
+    return true;
+}
+
+void ALobbyHandler::NewCharacterRequest(const FPlayerPreset& Param) {
+    UManager::Dispatch([this, Param] {
+        NewCharacterToServer(Param);
+    });
+}
+
 void ALobbyHandler::NewCharacterToClient_Implementation(const FPlayerPreset& Preset) {
     check(UManager::IsUser(this));
 
-    AddCharacterToList(Preset);
+    PostNewCharacter(Preset);
 
     // 만든 캐릭터 정보로 로딩합니다.
     SelectIndex = SelectMax - 1;
@@ -288,7 +337,7 @@ void ALobbyHandler::LoadCharactersToClient_Implementation(const TArray<FPlayerPr
     } else {
         SelectMax = 0;
         for(auto& Param : In) {
-            AddCharacterToList(Param);
+            PostNewCharacter(Param);
         } // end for
     } // end else
 }
@@ -320,9 +369,9 @@ void ALobbyHandler::EnterCustomizeModeToClient_Implementation() {
     BodySelect(0); // set initial body and looks
 }
 
-void ALobbyHandler::GetResultMessageToClient_Implementation(int8 Code) {
+void ALobbyHandler::PrintResultMessageToClient_Implementation(int8 Code) {
     ShowMessageBox();
-    MessageBoxUI->MessageBox->SetText(FText::FromString(GetResultMessage(Code)));
+    MessageBoxUI->MessageBox->SetText(FText::FromString(GetResultMessageFromCode(Code)));
 }
 
 void ALobbyHandler::OnBodyNext() {
@@ -346,7 +395,7 @@ void ALobbyHandler::OnCustomBegin() {
 
 void ALobbyHandler::OnCustomEnd() {
     Selected.Name = CharacterCustomizeUI->NameInputBox->GetText().ToString();
-    NewCharacterToServer(Selected);
+    NewCharacterRequest(Selected);
 }
 
 void ALobbyHandler::OnCustomCancel() {
@@ -388,6 +437,8 @@ FString ALobbyHandler::GetSalted(const FString& In) {
 }
 
 void ALobbyHandler::Initialize() {
+    check(UManager::IsUser(this));
+
     LoginUI->InputID->SetText(FText::GetEmpty());
     LoginUI->InputPW->SetText(FText::GetEmpty());
     LobbyUI->PlayerCharacterList->ClearListItems();
@@ -399,23 +450,29 @@ void ALobbyHandler::Initialize() {
     }
 }
 
-void ALobbyHandler::NextOutfit(int LookCode) {
+void ALobbyHandler::NextLook(int LookCode) {
+    check(UManager::IsUser(this));
+
     ++Selected.LookCode[LookCode];
-    if(Selected.LookCode[LookCode] >= OutfitItemCount[Selected.BodyCode][LookCode]) {
+    if(Selected.LookCode[LookCode] >= LookKinds[Selected.BodyCode][LookCode]) {
         Selected.LookCode[LookCode] = 0;
     }
-    Actor->SetLookMesh(LookCode, GetSelectedOutfitMesh(LookCode));
+    Actor->SetLookMesh(LookCode, GetSelectedLookMesh(LookCode));
 }
 
-void ALobbyHandler::PrevOutfit(int LookCode) {
+void ALobbyHandler::PrevLook(int LookCode) {
+    check(UManager::IsUser(this));
+
     --Selected.LookCode[LookCode];
     if(Selected.LookCode[LookCode] < 0) {
-        Selected.LookCode[LookCode] = OutfitItemCount[Selected.BodyCode][LookCode] - 1;
+        Selected.LookCode[LookCode] = LookKinds[Selected.BodyCode][LookCode] - 1;
     }
-    Actor->SetLookMesh(LookCode, GetSelectedOutfitMesh(LookCode));
+    Actor->SetLookMesh(LookCode, GetSelectedLookMesh(LookCode));
 }
 
 void ALobbyHandler::BodySelect(int In, bool bPreInit) {
+    check(UManager::IsUser(this));
+
     Selected.BodyCode = In;
 
     // 바디 메시 로드
@@ -424,7 +481,11 @@ void ALobbyHandler::BodySelect(int In, bool bPreInit) {
     // 의상 바디에 맞춰 초기화
     for(int i = 0; i < EPL_Count; ++i) {
         Selected.LookCode[i] *= static_cast<int>(bPreInit); // false: 의상 초기화
-        Actor->SetLookMesh(i, GetSelectedOutfitMesh(i));
+
+        // bPreInit 즉 기존에 세팅하고 유지한 값이 바뀐 바디의 룩 코드 값을 넘기면 체크
+        check(Selected.LookCode[i] <= LookKinds[Selected.BodyCode][i]);
+
+        Actor->SetLookMesh(i, GetSelectedLookMesh(i));
     }
 
     // Idle 모션 재생
@@ -432,10 +493,14 @@ void ALobbyHandler::BodySelect(int In, bool bPreInit) {
 }
 
 USkeletalMesh* ALobbyHandler::GetSelectedBodyMesh() const {
+    check(UManager::IsUser(this));
+
     return UPlayerMeshManager::Instance(this)->Assets[Selected.BodyCode].Body;
 }
 
-USkeletalMesh* ALobbyHandler::GetSelectedOutfitMesh(int LookCode) const {
+USkeletalMesh* ALobbyHandler::GetSelectedLookMesh(int LookCode) const {
+    check(UManager::IsUser(this));
+
     const auto& Arr = UPlayerMeshManager::Instance(this)->Assets[Selected.BodyCode].LookMesh[LookCode];
     int         Idx = Selected.LookCode[LookCode];
     return Arr[Idx];
@@ -447,6 +512,8 @@ void ALobbyHandler::SelectCharacterFromList(int32 Index) {
 
     // 범위 밖이면 nullptr로 세팅합니다.
     if (Index >= SelectMax || Index < 0) {
+        LobbyUI->PlayerNameText->SetText(FText::GetEmpty());
+
         Actor->SetBodyMesh(nullptr);
         for (int i = 0; i < EPL_Count; ++i) {
             Actor->SetLookMesh(i, nullptr);
@@ -457,6 +524,9 @@ void ALobbyHandler::SelectCharacterFromList(int32 Index) {
 
     const TArray<UObject*>&   Items = LobbyUI->PlayerCharacterList->GetListItems();
     UPlayerListViewEntryData* Item  = Cast<UPlayerListViewEntryData>(Items[Index]);
+
+    // set name
+    LobbyUI->PlayerNameText->SetText(FText::FromString(Item->Name));
 
     // load
     Selected.LookCode[EPL_Face]  = Item->FaceCode;
@@ -469,7 +539,7 @@ void ALobbyHandler::SelectCharacterFromList(int32 Index) {
     BodySelect(Item->BodyCode, true);
 }
 
-void ALobbyHandler::AddCharacterToList(const FPlayerPreset& Preset) {
+void ALobbyHandler::PostNewCharacter(const FPlayerPreset& Preset) {
     check(UManager::IsUser(this));
 
     UPlayerListViewEntryData* Item = NewObject<UPlayerListViewEntryData>(this);
@@ -484,7 +554,7 @@ void ALobbyHandler::AddCharacterToList(const FPlayerPreset& Preset) {
     LobbyUI->PlayerCharacterList->AddItem(Item);
 }
 
-void ALobbyHandler::LoadCharacterList(const FString& ID) {
+void ALobbyHandler::PostLogIn(const FString& ID) {
     check(UManager::IsServer(this));
     if (ID.IsEmpty()) {
         check(false);
@@ -507,7 +577,8 @@ void ALobbyHandler::LoadCharacterList(const FString& ID) {
                 Temp.LookCode[EPL_Shoes] = In->getInt("shoes_type");
                 Params.Add(Temp);
             }
-            LoadCharactersResponse(Params);
+            LoadCharactersResponse(Params); // get list
+            EnterLobbyModeResponse();       // move
         } // end lambda
     ); // end Query
 }
@@ -525,17 +596,17 @@ void ALobbyHandler::HideMessageBox() {
 void ALobbyHandler::OnLogIn() {
     FString ID = LoginUI->InputID->GetText().ToString();
     FString PW = LoginUI->InputPW->GetText().ToString();
-    LogInToServer(ID, PW);
+    LogInRequest(ID, PW);
 }
 
 void ALobbyHandler::OnSignUp() {
     FString ID = LoginUI->InputID->GetText().ToString();
     FString PW = LoginUI->InputPW->GetText().ToString();
-    SignUpToServer(ID, PW);
+    SignUpRequest(ID, PW);
 }
 
 void ALobbyHandler::OnLogOut() {
-    LogOutToServer();
+    LogOutRequest();
     EnterLoginModeResponse(); // return
 }
 

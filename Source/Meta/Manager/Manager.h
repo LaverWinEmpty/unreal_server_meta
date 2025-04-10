@@ -16,18 +16,6 @@
 #define DECLARE_MANAGER_GET_INSTANCE(TYPE)\
     static TYPE* Instance(const UObject* Context) { return UManager::Instance<TYPE>(Context); }
 
-#define REQUEST(Name, ...)										\
-	do {														\
-		if (HasAuthority()) Name##_Implementation(__VA_ARGS__);	\
-		else  Name(__VA_ARGS__);								\
-	} while(false)
-
-#define RESPONSE(Name, ...)							\
-	do {											\
-		if (HasAuthority()) Name(__VA_ARGS__);		\
-		else Name##_Implementation(__VA_ARGS__);	\
-	} while(false)
-
 UCLASS()
 class META_API UManager : public UGameInstanceSubsystem
 {
