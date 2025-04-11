@@ -1,22 +1,22 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "UI/PlayerListViewEntry.h"
-#include "UI/PlayerListViewEntryData.h"
+#include "UI/CharacterListEntry.h"
+#include "UI/CharacterListEntryData.h"
 #include "Components/TextBlock.h"
 #include "Components/Button.h"
 #include "Lobby/LobbyHandler.h"
 #include "LobbyUI.h"
 
-void UPlayerListViewEntry::NativeOnListItemObjectSet(UObject* In) {
-	UPlayerListViewEntryData* Data = Cast<UPlayerListViewEntryData>(In);
+void UCharacterListEntry::NativeOnListItemObjectSet(UObject* In) {
+	UCharacterListEntryData* Data = Cast<UCharacterListEntryData>(In);
 	check(Data);
 	Name->SetText(FText::FromString(Data->Name));
-	Button->OnClicked.AddDynamic(this, &UPlayerListViewEntry::OnSelected);
+	Button->OnClicked.AddDynamic(this, &UCharacterListEntry::OnSelected);
 	Index = Data->Index;
 }
 
-void UPlayerListViewEntry::OnSelected() {
+void UCharacterListEntry::OnSelected() {
 	ALobbyHandler* PC = Cast<ALobbyHandler>(GetOwningPlayer());
 	if (!PC) {
 		check(false);

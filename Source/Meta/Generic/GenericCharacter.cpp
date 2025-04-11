@@ -70,7 +70,16 @@ void AGenericCharacter::BeginPlay() {
     check(Anim);
     BodyMesh->SetAnimClass(Anim->GeneratedClass);
 
-    IsRun = true; // 임시
+    // IsRun = true;
+
+    UCapsuleComponent* Capsule = GetCapsuleComponent();
+    Capsule->SetHiddenInGame(false);
+    Capsule->SetVisibility(true);
+
+    auto GotCharacterMovement = GetCharacterMovement();
+    GotCharacterMovement->SetIsReplicated(true);
+    GotCharacterMovement->bUseControllerDesiredRotation = false;
+    GotCharacterMovement->bOrientRotationToMovement = false;
 }
 
 // Called every frame

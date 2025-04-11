@@ -5,13 +5,13 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "Blueprint/IUserObjectListEntry.h"
-#include "PlayerListViewEntry.generated.h"
+#include "CharacterListEntry.generated.h"
 
 class UTextBlock;
 class UButton;
 
 UCLASS()
-class META_API UPlayerListViewEntry : public UUserWidget, public IUserObjectListEntry
+class META_API UCharacterListEntry : public UUserWidget, public IUserObjectListEntry
 {
 	GENERATED_BODY()
 

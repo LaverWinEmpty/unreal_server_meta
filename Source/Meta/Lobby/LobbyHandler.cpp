@@ -5,7 +5,7 @@
 #include "UI/LobbyUI.h"
 #include "UI/CharacterCustomizeUI.h"
 #include "UI/MessageBoxUI.h"
-#include "UI/PlayerListViewEntryData.h"
+#include "UI/CharacterListEntryData.h"
 
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
@@ -525,7 +525,7 @@ void ALobbyHandler::SelectCharacterFromList(int32 Index) {
     }
 
     const TArray<UObject*>&   Items = LobbyUI->PlayerCharacterList->GetListItems();
-    UPlayerListViewEntryData* Item  = Cast<UPlayerListViewEntryData>(Items[Index]);
+    UCharacterListEntryData* Item  = Cast<UCharacterListEntryData>(Items[Index]);
 
     // set name
     LobbyUI->PlayerNameText->SetText(FText::FromString(Item->Name));
@@ -544,7 +544,7 @@ void ALobbyHandler::SelectCharacterFromList(int32 Index) {
 void ALobbyHandler::PostNewCharacter(const FPlayerPreset& Preset) {
     check(UManager::IsUser(this));
 
-    UPlayerListViewEntryData* Item = NewObject<UPlayerListViewEntryData>(this);
+    UCharacterListEntryData* Item = NewObject<UCharacterListEntryData>(this);
     Item->Index     = ++SelectMax;
     Item->Name      = Preset.Name;
     Item->BodyCode =  Preset.BodyCode;

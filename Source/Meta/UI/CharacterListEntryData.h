@@ -2,10 +2,10 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "PlayerListViewEntryData.generated.h"
+#include "CharacterListEntryData.generated.h"
 
 UCLASS()
-class META_API UPlayerListViewEntryData: public UObject {
+class META_API UCharacterListEntryData: public UObject {
     GENERATED_BODY()
 
 public:
