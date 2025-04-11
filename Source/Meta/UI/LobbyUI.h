@@ -21,26 +21,15 @@ public:
 	void Bind(ALobbyHandler*);
 
 public:
-	UPROPERTY(meta = (BindWidget))
-	UButton* LogOutButton;
+	UPROPERTY(meta = (BindWidget)) UButton* LogOutButton;
+	UPROPERTY(meta = (BindWidget)) UButton* NewCharacterButton;
 
-	UPROPERTY(meta = (BindWidget))
-	UButton* NewCharacterButton;
+	UPROPERTY(meta = (BindWidget)) UButton* NewRoomButton;
+	UPROPERTY(meta = (BindWidget)) UButton* StartButton;
 
-	UPROPERTY(meta = (BindWidget))
-	UTextBlock* PlayerNameText;
-
-	UPROPERTY(meta = (BindWidget))
-	UListView* PlayerCharacterList;
-
-	UPROPERTY(meta = (BindWidget))
-	UButton* StartButton;
-
-	//UPROPERTY(meta = (BindWidget))
-	//UButton* EnterRoomButton;
-
-	//UPROPERTY(meta = (BindWidget))
-	//UListView* Rooms;
+	UPROPERTY(meta = (BindWidget)) UTextBlock* PlayerNameText;
+	UPROPERTY(meta = (BindWidget)) UListView* PlayerCharacterList;
+	UPROPERTY(meta = (BindWidget)) UListView* RoomList;
 
 	// unused
 	UPROPERTY(meta = (BindWidget))

@@ -23,6 +23,14 @@ void UClientSessionManager::Leave(const APlayerController* In) {
 	ClientSessionList.Remove(Socket);
 }
 
+void UClientSessionManager::Leave(const FString& ID) {
+	TWeakObjectPtr<UNetConnection> Socket        = ClientSocketList[ID];
+	TSharedPtr<FClientSession>     ClientSession = ClientSessionList[Socket];
+
+	ClientSocketList.Remove(ClientSession->ID);
+	ClientSessionList.Remove(Socket);
+}
+
 TSharedPtr<FClientSession> UClientSessionManager::GetClientSession(APlayerController* PC) {
 	return ClientSessionList[PC->GetNetConnection()];
 }

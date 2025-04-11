@@ -9,10 +9,11 @@
  * Widget
  **************************************************************************************************/
 class UUserWidget;
+class UMessageBoxUI;
+class UInputBoxUI;
 class ULoginUI;
 class ULobbyUI;
 class UCharacterCustomizeUI;
-class UMessageBoxUI;
 
 /**************************************************************************************************
  * Player Actor
@@ -76,14 +77,12 @@ public:
     UFUNCTION() void OnShoesPrev() { PrevLook(EPL_Shoes); } //!< Character Customize UI Shoes PrevButton
 
 public:
-    UFUNCTION() void OnCustomBegin();  //!< Character Customize UI CustomBegin
-    UFUNCTION() void OnCustomEnd();    //!< Character Customize UI CustomEnd
-    UFUNCTION() void OnCustomCancel(); //!< Character Customize UI CustomCancel
-    UFUNCTION() void OnStart();        //!< Character Customize UI StartButton
-
-public:
-    UFUNCTION() void ShowMessageBox();
-    UFUNCTION() void HideMessageBox();
+    UFUNCTION() void OnCustomBegin();      //!< Character Customize UI CustomBegin
+    UFUNCTION() void OnCustomEnd();        //!< Character Customize UI CustomEnd
+    UFUNCTION() void OnCustomCancel();     //!< Character Customize UI CustomCancel
+    UFUNCTION() void OnStart();            //!< Lobby UI StartButton
+    UFUNCTION() void OnShowUICreateRoom(); //!< Lobby UI CreateRoomButton
+    UFUNCTION() void OnCreateRoom();       //!< CreateRoom UI
 
 protected:
     UFUNCTION(Client, Reliable)
@@ -164,16 +163,47 @@ protected:
 public:
     void PrintResultMessageResponse(int8);
 
+protected:
+    UFUNCTION(Server, Reliable)
+    void CreateRoomToServer(const FString& Name, const FString& IP);
+    void CreateRoomToServer_Implementation(const FString& Name, const FString& IP);
+public:
+    void CreateRoomRequest(const FString& Name, const FString& IP);
+
+protected:
+    UFUNCTION(NetMulticast, Reliable)
+    void UpdateRoomListToClient(const FString& Name, const FString& IP);
+    void UpdateRoomListToClient_Implementation(const FString& Name, const FString& IP);
+public:
+    void UpdateRoomListResponse(const FString& Name, const FString& IP);
+
+protected:
+    UFUNCTION(Client, Unreliable)
+    void InitializeRoomListToClient();
+    void InitializeRoomListToClient_Implementation();
+public:
+    void InitializeRoomListResponse();
+
+private:
+    // TODO: server 전용, 리펙터링 필요
+    TArray<FString> RoomNameList;
+    TArray<FString> RoomIpList;
+
 public:
     ULoginUI*              LoginUI;
     ULobbyUI*              LobbyUI;
     UCharacterCustomizeUI* CharacterCustomizeUI;
     UMessageBoxUI*         MessageBoxUI;
+    UInputBoxUI*           CreateRoomUI;
 
 private:
     FPlayerPreset Selected    = { 0 }; //!< 현재 고른 캐릭터 정보
     int32         SelectIndex = 0;     //!< 캐릭터 리스트 뷰에서 선택한 번호
     int32         SelectMax   = 0;     //!< 캐릭터 선택 가능 수
+
+private:
+    FString SelectedRoomAddress;
+    FString SelectedRoomName;
 
 private:
     int LookKinds[EPB_Count][EPL_Count] = { 0 }; //!< 각 Body의 Outfit별 아이템 가짓수
@@ -187,4 +217,5 @@ private:
     TSubclassOf<UUserWidget> LobbyUiClass;
     TSubclassOf<UUserWidget> CharacterCustomizeUiClass;
     TSubclassOf<UUserWidget> MessageBoxUiClass;
+    TSubclassOf<UUserWidget> InputBoxUiClass;
 };

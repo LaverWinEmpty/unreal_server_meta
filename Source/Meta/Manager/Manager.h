@@ -60,7 +60,7 @@ public:
 	static bool IsDedicated(const UObject*);  //!< check dedicated
 
 public:
-	static const FString& GetServerAddress(); //!< e.g. return "127.0.0.1:7777"
+	static const FString& GetServerAddress();   //!< e.g. return "127.0.0.1:7777"
 	static const FString& GetDatabaseAddress(); //!< e.g. return "127.0.0.1:7777"
 
 private:

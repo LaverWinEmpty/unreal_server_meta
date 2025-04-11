@@ -6,6 +6,10 @@
 UPlayerMeshManager::UPlayerMeshManager() {}
 
 void UPlayerMeshManager::Setup() {
+	if (!UManager::IsUser(this)) {
+		return; // 사용자만
+	}
+
 	// nullptr allows list
 	static TSet<int> Nullable = {
 		EPL_Hair,

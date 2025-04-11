@@ -19,6 +19,7 @@ public:
 public:
 	void Enter(const APlayerController*, TSharedPtr<FClientSession>);
 	void Leave(const APlayerController*);
+	void Leave(const FString& ID);
 
 public:
 	template<typename... Args> static TSharedPtr<FClientSession> Create(Args&&...);

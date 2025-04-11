@@ -8,7 +8,6 @@
 
 class UButton;
 class UTextBlock;
-class ALobbyHandler;
 
 UCLASS()
 class META_API UMessageBoxUI : public UUserWidget
@@ -16,9 +15,13 @@ class META_API UMessageBoxUI : public UUserWidget
 	GENERATED_BODY()
 
 public:
-	void Bind(ALobbyHandler*);
+	void NativeConstruct() override;
+
+public:
+	UFUNCTION() void Show();
+	UFUNCTION() void Hide();
 
 public:
 	UPROPERTY(meta = (BindWidget)) UButton*    OkButton;
-	UPROPERTY(meta = (BindWidget)) UTextBlock* MessageBox;
+	UPROPERTY(meta = (BindWidget)) UTextBlock* MessageBlock;
 };

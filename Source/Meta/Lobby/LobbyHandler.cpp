@@ -1,11 +1,13 @@
 #include "Lobby/LobbyHandler.h"
 #include "Lobby/LobbyActor.h"
 
+#include "UI/MessageBoxUI.h"
+#include "UI/InputBoxUI.h"
 #include "UI/LoginUI.h"
 #include "UI/LobbyUI.h"
 #include "UI/CharacterCustomizeUI.h"
-#include "UI/MessageBoxUI.h"
 #include "UI/CharacterListEntryData.h"
+#include "UI/RoomListEntryData.h"
 
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
@@ -22,6 +24,9 @@
 
 #include "Enum/ResultEnum.h"
 
+#include "Kismet/GameplayStatics.h"
+
+
 #define UI UI_ST
 THIRD_PARTY_INCLUDES_START
 #include "openssl/evp.h"
@@ -31,7 +36,9 @@ THIRD_PARTY_INCLUDES_END
 
 ALobbyHandler::ALobbyHandler() {
     bShowMouseCursor = true;
+    bReplicates      = true;
 
+#if !UE_SERVER
     // Login UI
     static ConstructorHelpers::FClassFinder<UUserWidget> LoginUiFinder(TEXT("/Game/UI/BP_LoginUI"));
     check(LoginUiFinder.Class);
@@ -51,6 +58,13 @@ ALobbyHandler::ALobbyHandler() {
     static ConstructorHelpers::FClassFinder<UUserWidget> MessageBoxUiFinder(TEXT("/Game/UI/BP_MessageBoxUI"));
     check(MessageBoxUiFinder.Class);
     MessageBoxUiClass = MessageBoxUiFinder.Class;
+
+    // InputBox UI
+    static ConstructorHelpers::FClassFinder<UUserWidget> InputBoxUiFinder(TEXT("/Game/UI/BP_InputBoxUI"));
+    check(InputBoxUiFinder.Class);
+    InputBoxUiClass = InputBoxUiFinder.Class;
+#endif
+
 }
 
 void ALobbyHandler::BeginPlay() {
@@ -81,10 +95,16 @@ void ALobbyHandler::BeginClient() {
     CharacterCustomizeUI->AddToViewport();
     CharacterCustomizeUI->Bind(this);
 
+    // MessageBox UI 생성, 자동 바인드
     MessageBoxUI = CreateWidget<UMessageBoxUI>(GetWorld(), MessageBoxUiClass);
     MessageBoxUI->AddToViewport(1);
-    MessageBoxUI->Bind(this);
     MessageBoxUI->SetVisibility(ESlateVisibility::Hidden); // default: hidden
+
+    // CreateRoom UI 생성 후 바인드
+    CreateRoomUI = CreateWidget<UInputBoxUI>(GetWorld(), InputBoxUiClass);
+    CreateRoomUI->AddToViewport(2);
+    CreateRoomUI->OkButton->OnClicked.AddDynamic(this, &ThisClass::OnCreateRoom);
+    CreateRoomUI->SetVisibility(ESlateVisibility::Hidden); // default: hidden
 
     // 에셋 개수 가져오기
     auto Manager = UPlayerMeshManager::Instance(this);
@@ -135,6 +155,48 @@ void ALobbyHandler::PrintResultMessageResponse(int8 Code) {
     UManager::Dispatch([this, Code]() {
         PrintResultMessageToClient(Code);
     });
+}
+
+void ALobbyHandler::CreateRoomToServer_Implementation(const FString& Name, const FString& IP) {
+    check(UManager::IsServer(this));
+
+    // TODO: RoomManager로 리펙터링
+    RoomIpList.Add(IP);
+    RoomNameList.Add(Name);
+
+    // response 합니다
+    UpdateRoomListResponse(Name, IP);
+}
+
+void ALobbyHandler::CreateRoomRequest(const FString& Name, const FString& IP) {
+    UManager::Dispatch([this, Name, IP]() {
+        CreateRoomToServer(Name, IP);
+    });
+}
+
+void ALobbyHandler::UpdateRoomListToClient_Implementation(const FString& Name, const FString& IP) {
+    if (!LobbyUI) {
+        return;
+    }
+
+    URoomListEntryData* Data = NewObject<URoomListEntryData>(this);
+    Data->Name    = Name;
+    Data->Address = IP;
+    LobbyUI->RoomList->AddItem(Data);
+}
+
+void ALobbyHandler::UpdateRoomListResponse(const FString& Name, const FString& IP) {
+    UManager::Dispatch([this, Name, IP]() {
+        UpdateRoomListToClient(Name, IP);
+    });
+}
+
+void ALobbyHandler::InitializeRoomListToClient_Implementation() {
+    //TODO:
+}
+
+void ALobbyHandler::InitializeRoomListResponse() {
+    //TODO:
 }
 
 void ALobbyHandler::NewCharacterResponse(const FPlayerPreset& Preset) {
@@ -344,34 +406,51 @@ void ALobbyHandler::LoadCharactersToClient_Implementation(const TArray<FPlayerPr
 
 
 void ALobbyHandler::EnterLoginModeToClient_Implementation() {
-    check(UManager::IsUser(this));
+    UE_LOG(LogTemp, Log, _T("Try EnterLoginMode"));
+    checkf(UManager::IsUser(this), _T("NetMode [%s]"), UManager::GetNetModeString(this));
+
+    UE_LOG(LogTemp, Log, _T("Set UI SetVisibility"));
     LoginUI->SetVisibility(ESlateVisibility::Visible);
     LobbyUI->SetVisibility(ESlateVisibility::Hidden);
     CharacterCustomizeUI->SetVisibility(ESlateVisibility::Hidden);
+
+    UE_LOG(LogTemp, Log, _T("Call Initialize"));
     Initialize();
+    UE_LOG(LogTemp, Log, _T("Succeeded EnterLoginMode"));
 }
 
 void ALobbyHandler::EnterLobbyModeToClient_Implementation() {
-    check(UManager::IsUser(this));
+    UE_LOG(LogTemp, Log, _T("Try EnterLobbyMode"));
+    checkf(UManager::IsUser(this), _T("NetMode [%s]"), UManager::GetNetModeString(this));
+
+    UE_LOG(LogTemp, Log, _T("Set UI SetVisibility"));
     LoginUI->SetVisibility(ESlateVisibility::Hidden);
     LobbyUI->SetVisibility(ESlateVisibility::Visible);
     CharacterCustomizeUI->SetVisibility(ESlateVisibility::Hidden);
+
+    UE_LOG(LogTemp, Log, _T("Call SelectCharacterFromList"));
     SelectCharacterFromList(0); // get first
+    UE_LOG(LogTemp, Log, _T("Succeeded EnterLobbyMode"));
 }
 
 void ALobbyHandler::EnterCustomizeModeToClient_Implementation() {
-    check(UManager::IsUser(this));
+    UE_LOG(LogTemp, Log, _T("Try EnterCustomizeMode"));
+    checkf(UManager::IsUser(this), _T("NetMode [%s]"), UManager::GetNetModeString(this));
+
+    UE_LOG(LogTemp, Log, _T("Set UI SetVisibility"));
     LoginUI->SetVisibility(ESlateVisibility::Hidden);
     LobbyUI->SetVisibility(ESlateVisibility::Hidden);
     CharacterCustomizeUI->SetVisibility(ESlateVisibility::Visible);
-
     CharacterCustomizeUI->NameInputBox->SetText(FText::GetEmpty());
+
+    UE_LOG(LogTemp, Log, _T("Call BodySelect"));
     BodySelect(0); // set initial body and looks
+    UE_LOG(LogTemp, Log, _T("Succeeded EnterCustomizeMode"));
 }
 
 void ALobbyHandler::PrintResultMessageToClient_Implementation(int8 Code) {
-    ShowMessageBox();
-    MessageBoxUI->MessageBox->SetText(FText::FromString(GetResultMessageFromCode(Code)));
+    MessageBoxUI->Show();
+    MessageBoxUI->MessageBlock->SetText(FText::FromString(GetResultMessageFromCode(Code)));
 }
 
 void ALobbyHandler::OnBodyNext() {
@@ -404,7 +483,55 @@ void ALobbyHandler::OnCustomCancel() {
 }
 
 void ALobbyHandler::OnStart() {
+    // TODO:
     UE_LOG(LogTemp, Log, _T("Clicked"));
+}
+
+void ALobbyHandler::OnShowUICreateRoom() {
+    check(UManager::IsUser(this));
+    CreateRoomUI->Show();
+}
+
+void ALobbyHandler::OnCreateRoom() {
+    // TODO: IP 데디 RoomManager에 저장...
+
+// Error: Standalone
+    if (UManager::IsStandalone(this)) {
+        UGameplayStatics::OpenLevel(GetWorld(), "TestLevel", false, "listen");
+        return;
+    }
+
+    FString Address = GetNetConnection()->LowLevelGetRemoteAddress();
+
+    // port set default
+    FString IP;
+    if (Address.Split(TEXT(":"), &IP, nullptr)) {
+        Address = FString::Printf(_T("%s:%d"), *IP, 7777);
+    }
+
+    // TODO: 소켓을 연결합니다.
+    // TODO: 소켓은 RoomManager에서 관리합니다.
+    // TODO: RoomManager는 Thread를 하나 만들어야 합니다
+
+    UE_LOG(LogTemp, Log, _T("Room Create Request: %s"), *Address);
+
+    // 로그아웃 요청
+    LogOutRequest();
+
+    // 방생성 요청
+    FString Name = CreateRoomUI->InputBlock->GetText().ToString();
+    CreateRoomRequest(Name, IP);
+
+    //// 리슨 서버를 클라이언트에서 생성합니다
+    //FString Params = "TestLevel -server -port=8888"; // 임시
+    //FPlatformProcess::CreateProc(
+    //    *FString("MetaListen.exe"),
+    //    *Params,
+    //    true, false, false, nullptr, 0, nullptr, nullptr
+    //);
+
+    // OpenLevel(..., "listen");
+    ClientTravel("ListenLevel", ETravelType::TRAVEL_Absolute);
 }
 
 FString ALobbyHandler::PasswordSHA256(const FString& In) {
@@ -471,19 +598,26 @@ void ALobbyHandler::PrevLook(int LookCode) {
 }
 
 void ALobbyHandler::BodySelect(int In, bool bPreInit) {
+    UE_LOG(LogTemp, Log, _T("Try BodySelect"));
     check(UManager::IsUser(this));
+    UE_LOG(LogTemp, Log, _T("Failed")); // 여기 확인하려고 그냥 LOG Failed
 
     Selected.BodyCode = In;
+    if (!Actor) {
+        UE_LOG(LogTemp, Log, _T("Actor is NullPointerException"));
+    }
 
     // 바디 메시 로드
-    Actor->SetBodyMesh(GetSelectedBodyMesh());
+    Actor->SetBodyMesh(GetSelectedBodyMesh()); // 이거 시발 오류같다
 
     // 의상 바디에 맞춰 초기화
     for(int i = 0; i < EPL_Count; ++i) {
         Selected.LookCode[i] *= static_cast<int>(bPreInit); // false: 의상 초기화
 
         // bPreInit 즉 기존에 세팅하고 유지한 값이 바뀐 바디의 룩 코드 값을 넘기면 체크
-        check(Selected.LookCode[i] <= LookKinds[Selected.BodyCode][i]);
+        if (Selected.LookCode[i] >= LookKinds[Selected.BodyCode][i]) {
+            UE_LOG(LogTemp, Log, _T("LookCode Out Of Range, %d > %d"), Selected.LookCode[i], LookKinds[Selected.BodyCode][i]);
+        }
 
         Actor->SetLookMesh(i, GetSelectedLookMesh(i));
     }
@@ -495,6 +629,8 @@ void ALobbyHandler::BodySelect(int In, bool bPreInit) {
 USkeletalMesh* ALobbyHandler::GetSelectedBodyMesh() const {
     check(UManager::IsUser(this));
 
+    // TODO: 여기 검사
+
     return UPlayerMeshManager::Instance(this)->Assets[Selected.BodyCode].Body;
 }
 
@@ -503,17 +639,21 @@ USkeletalMesh* ALobbyHandler::GetSelectedLookMesh(int LookCode) const {
 
     const auto& Arr = UPlayerMeshManager::Instance(this)->Assets[Selected.BodyCode].LookMesh[LookCode];
     int         Idx = Selected.LookCode[LookCode];
+
+    checkf(Arr[Idx], _T("Mesh[%d][%d] Is NullPointerException"), LookCode, Idx);
     return Arr[Idx];
 }
 
 // 0 ~ Max - 1
 void ALobbyHandler::SelectCharacterFromList(int32 Index) {
-    check(UManager::IsUser(this));
+    UE_LOG(LogTemp, Log, _T("Try SelectCharacterFromList"));
 
     SelectIndex = Index; // Save
 
     // 범위 밖이면 nullptr로 세팅합니다.
     if (Index >= SelectMax || Index < 0) {
+        UE_LOG(LogTemp, Log, _T("Character List Empty"));
+
         LobbyUI->PlayerNameText->SetText(FText::GetEmpty());
 
         Actor->SetBodyMesh(nullptr);
@@ -524,10 +664,23 @@ void ALobbyHandler::SelectCharacterFromList(int32 Index) {
         return;
     }
 
-    const TArray<UObject*>&   Items = LobbyUI->PlayerCharacterList->GetListItems();
+    const TArray<UObject*>& Items = LobbyUI->PlayerCharacterList->GetListItems();
+    if (Items.Num() == 0) {
+        UE_LOG(LogTemp, Log, _T("Player Character List Item Load Failed."));
+        check(false);
+    }
+
     UCharacterListEntryData* Item  = Cast<UCharacterListEntryData>(Items[Index]);
+    if (!Item) {
+        UE_LOG(LogTemp, Log, _T("Player Character List Item Casting Failed."))
+        check(false);
+    }
 
     // set name
+    if (!LobbyUI) {
+        UE_LOG(LogTemp, Log, _T("LOBBY UI IS WHY NULLPTR????"))
+        check(false);
+    }
     LobbyUI->PlayerNameText->SetText(FText::FromString(Item->Name));
 
     // load
@@ -538,6 +691,8 @@ void ALobbyHandler::SelectCharacterFromList(int32 Index) {
     Selected.LookCode[EPL_Shoes] = Item->ShoesCode;
 
     // pre-init
+    
+    UE_LOG(LogTemp, Log, _T("Call BodySelect"));
     BodySelect(Item->BodyCode, true);
 }
 
@@ -563,6 +718,8 @@ void ALobbyHandler::PostLogIn(const FString& ID) {
         return;
     }
 
+    UE_LOG(LogTemp, Log, _T("LogIn Succeeded, PostLogIn()"));
+
     UDatabaseManager::Instance(this)->Query(
         "SELECT * FROM player_tbl WHERE owner_id = ? ORDER BY created_at ASC",
         [ID](sql::PreparedStatement* In) { In->setString(1, TCHAR_TO_UTF8(*ID)); },
@@ -579,20 +736,16 @@ void ALobbyHandler::PostLogIn(const FString& ID) {
                 Temp.LookCode[EPL_Shoes] = In->getInt("shoes_type");
                 Params.Add(Temp);
             }
+
+            UE_LOG(LogTemp, Log, _T("SQL: Load Characters Succeeded"));
+
             LoadCharactersResponse(Params); // get list
+            UE_LOG(LogTemp, Log, _T("LoadCharactersResponse() Succeeded"));
+
             EnterLobbyModeResponse();       // move
+            UE_LOG(LogTemp, Log, _T("EnterLobbyModeResponse() Succeeded"));
         } // end lambda
     ); // end Query
-}
-
-void ALobbyHandler::ShowMessageBox() {
-    check(!UManager::IsDedicated(this));
-    MessageBoxUI->SetVisibility(ESlateVisibility::Visible);
-}
-
-void ALobbyHandler::HideMessageBox() {
-    check(!UManager::IsDedicated(this));
-    MessageBoxUI->SetVisibility(ESlateVisibility::Hidden);
 }
 
 void ALobbyHandler::OnLogIn() {
